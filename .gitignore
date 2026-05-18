@@ -1,0 +1,10 @@
+﻿.env
+__pycache__/
+*.pyc
+outputs/stories/*
+outputs/posts/*
+outputs/checks/*
+outputs/content_log.json
+!outputs/stories/.gitkeep
+!outputs/posts/.gitkeep
+!outputs/checks/.gitkeep
