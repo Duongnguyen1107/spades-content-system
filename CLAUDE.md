@@ -6,7 +6,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Mục đích hệ thống
 
-Content pipeline tự động cho **Spades Board Game Cafe** — quán poker giải trí (no cash game, #NoCashGame) tại Bình Thạnh, HCM. Hệ thống tìm story thật từ internet, bridge sang poker concept, viết bài theo lamwork style, review và fact-check trước khi đăng.
+Content marketing tự động cho **Spades Board Game Cafe** — quán poker giải trí (no cash game, #NoCashGame) tại Bình Thạnh, HCM. Hệ thống tạo nhiều dạng bài viết chất lượng cao, ít chỉnh sửa, chạy hoàn toàn qua Telegram.
+
+### Kiến trúc đã chốt (2026-05)
+
+```
+1 Strategist (subagent) — phỏng vấn user, gợi ý angle, chọn format, fill data gap
+        ↓
+        ├── Story Writer    — thought leadership, bridge story ngoài đời → poker insight
+        ├── Copywriter      — bài ngắn bán cảm giác hoặc chứng minh tính năng quán
+        └── Advertorial     — kể chuyện người thật trong community Spades
+        ↓
+Fact Checker (khi có claim cụ thể)
+```
+
+**Nguyên tắc thiết kế cốt lõi:** Quality gate nằm ở đầu vào — Strategist phải làm rõ đủ data trước khi viết, không chạy pipeline rẻ rồi chỉnh sửa nhiều lần sau.
+
+**Strategist phải chủ động:** gợi ý angle thay vì chỉ hỏi thụ động. Với Story Writing: đề xuất góc tâm lý chưa khai thác. Với Advertorial: phỏng vấn kéo story ra từ user.
+
+### Các dạng bài sẽ phát triển thêm sau
+
+Caption ảnh ngắn, event announcement, thread Facebook — chưa build, thêm vào khi cần bằng cách tạo writer agent mới và mở rộng Strategist.
 
 ---
 
@@ -86,7 +106,7 @@ Fact Checker (Sonnet, web_search)
 |------|---------|-------|-----------------|
 | `agents/story-scanner.md` | Tìm story thật theo STORY PATTERN, output bridge point + 2 chiều | Haiku | ✅ |
 | `agents/content-strategist.md` | Đọc story + STRATEGY pre-seed → marketing brief | Sonnet | ✅ |
-| `agents/content-writer.md` | Viết bài lamwork style. 2 format: Story-Bridge / Personal Reflection | Sonnet | ✅ |
+| `agents/spades-story-writer.md` | Viết bài Story Writing (thought leadership). 2 format: Story-Bridge / Personal Reflection | Sonnet | ✅ |
 | `agents/fact-checker.md` | Verify facts, fix inline với strikethrough | Sonnet | ✅ |
 | `agents/content-reviewer.md` | Chấm 7 tiêu chí + Khoa simulation — standalone only | Sonnet | ❌ (dùng `--step review`) |
 

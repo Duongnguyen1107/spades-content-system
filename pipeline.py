@@ -29,7 +29,7 @@ load_dotenv()
 
 CHECKER_AGENT     = Path(__file__).parent / "agents" / "fact-checker.md"
 SCANNER_AGENT     = Path(__file__).parent / "agents" / "story-scanner.md"
-WRITER_AGENT      = Path(__file__).parent / "agents" / "content-writer.md"
+WRITER_AGENT      = Path(__file__).parent / "agents" / "spades-story-writer.md"
 STRATEGIST_AGENT  = Path(__file__).parent / "agents" / "content-strategist.md"
 REVIEWER_AGENT    = Path(__file__).parent / "agents" / "content-reviewer.md"
 MODEL          = "claude-sonnet-4-6"
@@ -1837,6 +1837,7 @@ def main():
                                          auto=args.auto)
             recent_log = load_content_log()[-5:]
             result = run_writer(chosen, topic, brief=brief, recent_log=recent_log)
+            result = result.replace(" — ", ", ").replace("— ", ", ").replace(" —", ",")
             path = save_to_path(result, post_path_for(slug), topic)
             log_article(topic, brief, path)
             print(f"\n✓ Post saved: {path}")
