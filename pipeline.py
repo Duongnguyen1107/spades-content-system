@@ -234,29 +234,76 @@ Bridge BỎ khi phải giải thích dài mới thấy liên quan.
 
 NHẮC LẠI: Chỉ chọn và xếp hạng từ input. Tuyệt đối không tự viết thêm story."""
 
-_ANCHOR_CHAT_SYSTEM = """Bạn giúp làm rõ topic trước khi tìm story cho Spades Board Game Cafe — quán poker giải trí tại HCM.
+_ANCHOR_TEMPLATE_SYSTEM = """Bạn là senior content strategist cho Spades Board Game Cafe — quán poker giải trí tại HCM.
 
-Mục tiêu: hỏi 2-3 lượt để hiểu chính xác khía cạnh nào của topic người dùng muốn viết, rồi đúc kết thành anchor cụ thể đủ để tìm story và bridge sang poker.
+Nhiệm vụ: hỏi 2-3 lượt để hiểu đúng ý tưởng của người dùng, rồi synthesize thành bản STRATEGY đầy đủ. Bản này là input duy nhất cho toàn bộ pipeline sau — quyết định domain tìm story, góc viết, format bài, emotional arc, và brief.
 
-Cách hỏi:
-- Mỗi lượt hỏi đúng 1 câu, ngắn gọn, dùng ngôn ngữ đời thường
-- Đưa ra 3-4 options cụ thể + [0] nhập tay — options phải khác nhau về cơ chế, không chỉ khác từ ngữ
-- Không giải thích dài dòng, không dùng từ kỹ thuật poker
-- Sau 2-3 lượt: tóm tắt anchor và hỏi confirm
+---
 
-Khi anchor đã đủ rõ, output ĐÚNG format này (không thêm gì khác):
-<ANCHOR>
-Khía cạnh: [hành vi/cơ chế cụ thể người dùng muốn viết — 1 câu, không phải concept trừu tượng]
-Poker moment: [khoảnh khắc cụ thể ở bàn poker player gặp đúng tình huống này]
-Story pattern: [tìm story về ai làm gì → hậu quả gì — đủ cụ thể để Google được]
-</ANCHOR>
+## CÁCH DẪN CHUYỆN
 
-Ví dụ anchor tốt (topic: tư duy logic):
-<ANCHOR>
-Khía cạnh: người ta tiếp tục hành động dù tín hiệu xung quanh đã thay đổi — không dừng lại để hỏi "cách này còn hiệu quả không?"
-Poker moment: tiếp tục bluff dù đối thủ đã call 2 lần — không đọc lại board, không hỏi lại read
-Story pattern: tìm story về ai đó kiên trì theo plan cũ khi tình huống đã đổi → thất bại, vs người dừng lại đánh giá lại → thành công
-</ANCHOR>"""
+Lượt 1: Nhận topic thô → hỏi 1 câu về KHÍA CẠNH cụ thể. Đưa 3-4 options khác nhau về cơ chế + [0] nhập tay.
+Lượt 2: Nhận trả lời → hỏi 1 câu về KHOẢNH KHẮC POKER cụ thể (khi nào ở bàn player gặp điều này?). Đưa 2-3 options.
+Lượt 3 (nếu cần): Hỏi về GÓC KẾT NỐI — người đọc sẽ nhận ra mình ở chỗ nào.
+
+Nguyên tắc hỏi:
+- 1 câu mỗi lượt, ngôn ngữ đời thường, không jargon poker
+- Options phải khác nhau về cơ chế — không chỉ khác từ ngữ
+- Đừng giải thích dài — hỏi xong để người dùng trả lời
+- Nếu người dùng trả lời bằng số (1/2/3) → hiểu là chọn option đó
+
+---
+
+## KHI ĐỦ RÕ → OUTPUT STRATEGY
+
+Sau 2-3 lượt, synthesize toàn bộ thành bản STRATEGY. Output ĐÚNG format dưới đây, không thêm gì khác ngoài tag:
+
+<STRATEGY>
+CONCEPT      : [cơ chế cốt lõi — "X xảy ra → Y" cụ thể, không phải định nghĩa]
+CHIỀU SAI    : [hành động cụ thể người chơi hay làm] → [hậu quả cụ thể ở bàn poker]
+CHIỀU ĐÚNG   : [hành động cụ thể thay thế] → [lý do cơ học nó work] → [kết quả]
+POKER MOMENT : [khoảnh khắc cụ thể ở bàn — ai, đang làm gì, board/stack như thế nào]
+FORMAT       : [Story-Bridge / Personal Reflection]
+AUDIENCE     : [Tier 1 — Chưa chơi / Tier 2 — Mới chơi / Tier 3 — Thường xuyên / Broad]
+HOOK TYPE    : [Kết quả trước / Vào giữa trận / Số liệu đối lập / Câu hỏi tu từ / Đối lập hành động]
+DOMAIN       : [domain tốt nhất để tìm story — 1 trong: Bóng đá / Esports Gaming / MMA Boxing / Đầu tư Forex Crypto / Kinh doanh thương hiệu lớn / Triết học Stoicism / Hàng không vũ trụ / Lịch sử thế giới / Phim Series triết học]
+STORY PATTERN: [tìm story về ai + làm gì + hậu quả gì — đủ cụ thể để Tavily search được. VD: "tướng quân tự tin tấn công khi đã cầm chắc ưu thế → địch dùng bẫy → thua sạch"]
+EMOTIONAL ARC: [cảm xúc ở hook — lý do] → [cảm xúc ở bridge — lý do] → [cảm xúc sau CTA — lý do]
+SHARE TRIGGER: [Identity signal / Recognition gift / Conversation starter] — [1 câu: element nào trong bài kích hoạt trigger này]
+</STRATEGY>
+
+---
+
+## TIÊU CHUẨN CHẤT LƯỢNG — tự check trước khi output
+
+CONCEPT tốt: có X → Y rõ ràng, đọc một mình vẫn hiểu cơ chế. Không phải "phải kiên nhẫn" hay "cần bình tĩnh".
+CHIỀU SAI tốt: đọc xong tự nhận ra mình — cụ thể đến mức reader nghĩ "ừ mình hay làm vậy". Không phải "chơi tệ".
+CHIỀU ĐÚNG tốt: có bước làm gì, không phải "chơi tốt hơn". Lý do cơ học ≠ lý do cảm xúc.
+POKER MOMENT tốt: có board/stack/tình huống cụ thể, không phải "khi chơi poker".
+STORY PATTERN tốt: Google query được ngay — có nhân vật type + hành động + hậu quả.
+EMOTIONAL ARC tốt: 3 checkpoint khác nhau, mỗi cái có lý do trong ngoặc. Không phải "tò mò → học được → muốn ghé".
+DOMAIN: chọn domain có story MIRROR đúng cơ chế trong CONCEPT — không phải domain quen thuộc nhất.
+
+---
+
+## VÍ DỤ STRATEGY TỐT
+
+Topic người dùng: "tư duy logic"
+Sau 2 lượt → user muốn viết về "tiếp tục làm theo cách cũ dù tình huống đã thay đổi vì đã đầu tư quá nhiều vào nó"
+
+<STRATEGY>
+CONCEPT      : đã bỏ nhiều công sức vào một hướng → não tự biện minh để tiếp tục → không nhìn thấy tín hiệu "hướng này không còn hiệu quả" → mất thêm
+CHIỀU SAI    : tiếp tục bluff thêm 2 street vì đã cược nhiều ở pre/flop → đối thủ vẫn call → mất toàn bộ stack cho một line không có value
+CHIỀU ĐÚNG   : nhận ra bluff đã bị read từ turn → dừng lại, check/fold river → bảo toàn stack cho tay tốt hơn ở sau
+POKER MOMENT : river, đã cược 3 street, đối thủ call hết, board paired, stack còn 40BB — tiếp tục shove hay check?
+FORMAT       : Story-Bridge
+AUDIENCE     : Tier 2 — Mới chơi
+HOOK TYPE    : Đối lập hành động
+DOMAIN       : Kinh doanh thương hiệu lớn
+STORY PATTERN: công ty/CEO tiếp tục đầu tư vào sản phẩm thất bại vì đã bỏ quá nhiều → đối thủ pivot nhanh → công ty lớn thua → CEO kia thành công
+EMOTIONAL ARC: Tò mò (công ty lớn thế sao lại sai?) → Nhận ra (mình cũng làm vậy ở bàn mà không biết) → Muốn thử lại (lần sau ngồi bàn sẽ tự hỏi "mình đang tiếp tục vì đúng hay vì lỡ rồi?")
+SHARE TRIGGER: Identity signal — CHIỀU SAI phải đủ cụ thể: "tiếp tục cược vì đã cược nhiều rồi" là hành động ai cũng từng làm nhưng chưa có tên gọi — đặt tên cho nó trong bài để reader share vì "đây là mình"
+</STRATEGY>"""
 
 
 def _calc_cost(input_tokens: int, output_tokens: int, search_calls: int = 0,
@@ -556,8 +603,18 @@ def get_recent_domains(n: int = 4) -> list[str]:
     return domains
 
 
-def run_router(query: str) -> list[str]:
+def run_router(query: str, strategy_domain: str = "") -> list[str]:
     """Chọn đúng 2 domain phù hợp nhất với topic. Chi phí ~$0.001."""
+    # Nếu strategy đã chỉ định domain → dùng luôn, không gọi AI
+    if strategy_domain and strategy_domain in _SCAN_DOMAIN_MAP:
+        recent = get_recent_domains(4)
+        # Chọn domain bổ sung khác với domain chính
+        backup = next(
+            (name for name, _ in _SCAN_DOMAINS if name != strategy_domain and name not in recent[:2]),
+            next((name for name, _ in _SCAN_DOMAINS if name != strategy_domain), _SCAN_DOMAINS[1][0])
+        )
+        print(f"  [Router → Strategy: {strategy_domain} + {backup}]")
+        return [strategy_domain, backup]
     import json
     recent = get_recent_domains(4)
 
@@ -593,6 +650,81 @@ def _has_structured_topic(query: str) -> bool:
     """Kiểm tra topic đã có CONCEPT/CHIỀU SAI/CHIỀU ĐÚNG chưa."""
     q = query.upper()
     return "CONCEPT" in q and ("CHIỀU SAI" in q or "CHIEU SAI" in q)
+
+
+def parse_strategy(text: str) -> dict:
+    """Parse <STRATEGY> block thành dict các field."""
+    m = re.search(r'<STRATEGY>(.*?)</STRATEGY>', text, re.DOTALL)
+    if not m:
+        return {}
+    raw = m.group(1)
+    fields = {}
+    for line in raw.splitlines():
+        if ':' in line:
+            key, _, val = line.partition(':')
+            k = key.strip().upper().replace(' ', '_')
+            fields[k] = val.strip()
+    return fields
+
+
+def run_anchor_template(topic: str) -> tuple[str, dict]:
+    """Hội thoại 2-3 lượt để làm rõ topic, output STRATEGY đầy đủ.
+    Trả về (raw_strategy_text, parsed_fields_dict)."""
+    print(f"\n{'='*60}")
+    print(f"  STRATEGY BUILDER — {topic}")
+    print(f"  (Trả lời để làm rõ góc viết. Ctrl+C để bỏ qua.)")
+    print(f"{'='*60}\n")
+
+    messages = [{"role": "user", "content": f"Topic: {topic}"}]
+
+    for turn in range(6):
+        response = _with_retry(lambda: _client.messages.create(
+            model=MODEL,
+            max_tokens=1200,
+            system=_ANCHOR_TEMPLATE_SYSTEM,
+            messages=messages,
+        ))
+        _print_usage(f"Strategy Builder lượt {turn + 1}", response.usage.input_tokens, response.usage.output_tokens)
+
+        ai_text = response.content[0].text.strip()
+
+        # Kiểm tra đã có STRATEGY output chưa
+        if '<STRATEGY>' in ai_text:
+            outside = re.sub(r'<STRATEGY>.*?</STRATEGY>', '', ai_text, flags=re.DOTALL).strip()
+            if outside:
+                print(f"{outside}\n")
+
+            fields = parse_strategy(ai_text)
+            print("\n" + "━"*60)
+            print("  STRATEGY ĐÃ SẴN SÀNG:")
+            for k, v in fields.items():
+                label = k.replace('_', ' ').title()
+                print(f"  {label:<14}: {v}")
+            print("━"*60)
+
+            confirm = input("\nOK dùng strategy này? (Enter = yes / n = chỉnh lại): ").strip().lower()
+            if confirm == 'n':
+                custom = input("Nhập field cần chỉnh (VD: DOMAIN: MMA Boxing): ").strip()
+                if custom and ':' in custom:
+                    k, _, v = custom.partition(':')
+                    fields[k.strip().upper().replace(' ', '_')] = v.strip()
+                    print("✓ Đã cập nhật.\n")
+            return ai_text, fields
+
+        print(f"{ai_text}\n")
+        messages.append({"role": "assistant", "content": ai_text})
+
+        try:
+            user_input = input("> ").strip()
+        except (KeyboardInterrupt, EOFError):
+            print("\n  (Bỏ qua strategy builder — dùng topic gốc)")
+            return topic, {}
+
+        if not user_input:
+            break
+        messages.append({"role": "user", "content": user_input})
+
+    return topic, {}
 
 
 def run_anchor_chat(topic: str) -> str:
@@ -820,14 +952,17 @@ def _scan_domain_mini(query: str, domain: str, hints: str, scanner_system: str) 
     return _with_retry(_do_mini, max_retries=5, wait_s=60)
 
 
-def run_scanner(query: str, auto: bool = False) -> str:
+def run_scanner(query: str, auto: bool = False, strategy: dict | None = None) -> str:
     """Parallel domain scan + evaluate call."""
     print(f"\n{'='*60}")
     print(f"  STORY SCANNER — {query[:80]}{'...' if len(query) > 80 else ''}")
     print(f"{'='*60}\n")
 
+    strategy = strategy or {}
+    strategy_domain = strategy.get("DOMAIN", "")
+
     # [A] Router chọn 1-2 domain phù hợp nhất
-    chosen_domains = run_router(query)
+    chosen_domains = run_router(query, strategy_domain=strategy_domain)
     print(f"  Domains được chọn: {', '.join(chosen_domains)}\n")
 
     # [B] Scan đủ cả 2 domain — không early stop
@@ -841,16 +976,28 @@ def run_scanner(query: str, auto: bool = False) -> str:
     if used_stories:
         print(f"  Story đã dùng gần đây (sẽ tránh): {len(used_stories)} entries")
 
+    # Enrich query với STORY PATTERN từ strategy nếu có
+    scan_query = query
+    if strategy.get("STORY_PATTERN"):
+        scan_query = f"{query}\n\nSTORY PATTERN cần tìm: {strategy['STORY_PATTERN']}"
+    if strategy.get("CONCEPT"):
+        scan_query += f"\nCONCEPT cần bridge: {strategy['CONCEPT']}"
+    if strategy.get("CHIỀU_SAI") or strategy.get("CHIỀU_ĐÚNG"):
+        scan_query += (
+            f"\nCHIỀU SAI: {strategy.get('CHIỀU_SAI', '')}"
+            f"\nCHIỀU ĐÚNG: {strategy.get('CHIỀU_ĐÚNG', '')}"
+        )
+
     for domain in chosen_domains:
         hints = _SCAN_DOMAIN_MAP.get(domain, "")
         print(f"  Scanning {domain} [{scan_label}]...")
         try:
             if use_deepseek:
                 text, in_tok, out_tok, searches = _scan_domain_mini_deepseek(
-                    query, domain, hints, scanner_system, used_stories
+                    scan_query, domain, hints, scanner_system, used_stories
                 )
             else:
-                text, in_tok, out_tok, searches = _scan_domain_mini(query, domain, hints, scanner_system)
+                text, in_tok, out_tok, searches = _scan_domain_mini(scan_query, domain, hints, scanner_system)
             domain_results[domain] = text
             total_in       += in_tok
             total_out      += out_tok
@@ -919,9 +1066,8 @@ def run_scanner(query: str, auto: bool = False) -> str:
     return eval_text
 
 
-def run_strategist(story: str, query: str) -> str:
+def run_strategist(story: str, query: str, strategy: dict | None = None) -> str:
     system = load_agent(STRATEGIST_AGENT)
-    # Đính kèm 5 bài gần nhất để tránh lặp angle/audience
     recent = load_content_log()[-5:]
     history_section = ""
     if recent:
@@ -929,7 +1075,29 @@ def run_strategist(story: str, query: str) -> str:
         for e in recent:
             lines.append(f"- [{e['date']}] {e['topic']} | {e.get('audience','')} | {e.get('angle','')}")
         history_section = "\n" + "\n".join(lines) + "\n=== END HISTORY ==="
-    user = f"Query: {query}{history_section}\n\n=== STORY ĐÃ CHỌN ===\n{story}\n=== END ==="
+
+    # Pre-seed từ strategy nếu có — giảm drift giữa user intent và brief
+    strategy_section = ""
+    if strategy:
+        fields_to_seed = {
+            "FORMAT": strategy.get("FORMAT", ""),
+            "AUDIENCE": strategy.get("AUDIENCE", ""),
+            "HOOK TYPE": strategy.get("HOOK_TYPE", ""),
+            "CONCEPT": strategy.get("CONCEPT", ""),
+            "CHIỀU SAI": strategy.get("CHIỀU_SAI", ""),
+            "CHIỀU ĐÚNG": strategy.get("CHIỀU_ĐÚNG", ""),
+            "EMOTIONAL ARC": strategy.get("EMOTIONAL_ARC", ""),
+            "SHARE TRIGGER": strategy.get("SHARE_TRIGGER", ""),
+        }
+        seeded = {k: v for k, v in fields_to_seed.items() if v}
+        if seeded:
+            lines = ["=== STRATEGY PRE-SEEDED (dùng làm điểm bắt đầu, có thể điều chỉnh theo story thật) ==="]
+            for k, v in seeded.items():
+                lines.append(f"{k}: {v}")
+            lines.append("=== END STRATEGY ===")
+            strategy_section = "\n" + "\n".join(lines)
+
+    user = f"Query: {query}{history_section}{strategy_section}\n\n=== STORY ĐÃ CHỌN ===\n{story}\n=== END ==="
     return stream_agent(system, user,
                         label=f"CONTENT STRATEGIST — {query}",
                         max_tokens=1500, use_search=False)
@@ -1497,25 +1665,23 @@ def main():
     if args.pipeline:
         query = args.pipeline
         _session_usage.clear()
-        steps = "Template → Scanner → Strategist → Writer" + ("" if args.no_check else " → Fact Checker")
+        steps = "Strategy Builder → Scanner → Strategist → Writer" + ("" if args.no_check else " → Fact Checker")
         print(f"\n🔄 FULL PIPELINE: {query}")
         print(f"   {steps}\n")
 
-        # Bước 0a — anchor chat (chỉ trong --guided mode)
-        if args.guided and not args.auto and not _has_structured_topic(query):
-            anchor = run_anchor_chat(query)
-            if anchor and anchor != query:
-                query = f"{query}\n\nANCHOR:\n{anchor}"
-
-        # Bước 0b — template (bỏ qua nếu --auto hoặc topic đã có CONCEPT/CHIỀU SAI)
+        # Bước 0 — Strategy Builder (gộp anchor + template thành 1 bước sâu)
+        strategy: dict = {}
         if not args.auto and not _has_structured_topic(query):
-            templates = run_template(query)
-            if templates:
-                query = pick_template(templates, query)
+            _, strategy = run_anchor_template(query)
+            # Dùng CONCEPT làm query nếu có để slug đẹp hơn
+            if strategy.get("CONCEPT"):
+                query = f"{query}\n\nSTRATEGY:\n" + "\n".join(
+                    f"{k}: {v}" for k, v in strategy.items() if v
+                )
 
-        # Bước 1 — scan (tạo slug dùng chung cho toàn pipeline)
-        scanner_out = run_scanner(query, auto=args.auto)
-        slug = make_slug(query)
+        # Bước 1 — scan (truyền strategy để router + scanner dùng)
+        scanner_out = run_scanner(query, auto=args.auto, strategy=strategy)
+        slug = make_slug(args.pipeline)  # slug từ topic gốc, không phải query dài
         s_path = save_to_path(scanner_out, Path("outputs/stories") / f"{slug}.md", query)
         print(f"✓ Stories: {s_path}  [slug: {slug}]")
 
@@ -1525,37 +1691,29 @@ def main():
         else:
             chosen_story = pick_story(scanner_out)
 
-        # Bước 3 — brief (optional)
+        # Bước 3 — brief (truyền strategy để pre-seed)
         if args.no_brief:
             final_brief = ""
         else:
-            raw_brief = run_strategist(chosen_story, query)
+            raw_brief = run_strategist(chosen_story, args.pipeline, strategy=strategy)
             final_brief = raw_brief if args.auto else confirm_brief(raw_brief)
-            # Lưu brief với slug liên kết
             save_to_path(final_brief, Path("outputs/stories") / f"{slug}_brief.md",
-                         f"Brief: {query}")
+                         f"Brief: {args.pipeline}")
 
-        # Bước 4 — viết bài (kèm hooks log để tránh lặp cấu trúc)
+        # Bước 4 — viết bài
         recent_log = load_content_log()[-5:]
-        writer_out = run_writer(chosen_story, query, brief=final_brief, recent_log=recent_log)
-        w_path = save_to_path(writer_out, post_path_for(slug), query)
-        log_article(query, final_brief, w_path)
+        writer_out = run_writer(chosen_story, args.pipeline, brief=final_brief, recent_log=recent_log)
+        w_path = save_to_path(writer_out, post_path_for(slug), args.pipeline)
+        log_article(args.pipeline, final_brief, w_path)
         print(f"✓ Bài viết: {w_path}")
 
         article = extract_article(writer_out)
 
-        # Bước 5 — review chất lượng (optional, kèm brief để check alignment)
-        r_path = None
-        if not args.no_review:
-            review_out = run_reviewer(article, query, brief=final_brief)
-            r_path = save_to_path(review_out, review_path_for(slug), f"Review: {query}")
-            print(f"✓ Review  : {r_path}")
-
-        # Bước 6 — fact check (optional)
+        # Bước 5 — fact check (reviewer đã bỏ — strategy builder đảm nhận vai trò định hướng)
         c_path = None
         if not args.no_check:
-            check_out = run_checker(article, query)
-            c_path = save_to_path(check_out, check_path_for(slug), f"Fact Check: {query}")
+            check_out = run_checker(article, args.pipeline)
+            c_path = save_to_path(check_out, check_path_for(slug), f"Fact Check: {args.pipeline}")
             print(f"✓ Fact check: {c_path}")
 
         print(f"\n{'='*60}")
@@ -1563,8 +1721,6 @@ def main():
         print(f"  Slug    : {slug}")
         print(f"  Stories : {s_path}")
         print(f"  Bài viết: {w_path}")
-        if r_path:
-            print(f"  Review  : {r_path}")
         if c_path:
             print(f"  Check   : {c_path}")
         print(f"{'='*60}\n")
