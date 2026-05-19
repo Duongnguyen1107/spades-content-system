@@ -928,6 +928,41 @@ Xuất đầy đủ FACT CHECK REPORT theo format đã định, bao gồm phần
                         max_tokens=6000, use_search=True, model=CHECKER_MODEL)
 
 
+def _extract_pattern_from_topic(topic: str) -> dict:
+    """Dùng Haiku extract cơ chế tâm lý từ raw topic để chạy Pattern Scan."""
+    prompt = (
+        f"Topic: {topic}\n\n"
+        f"Từ topic trên, xác định cơ chế tâm lý cốt lõi có thể bridge sang poker.\n"
+        f"Output đúng 4 dòng, không giải thích thêm:\n"
+        f"STORY_PATTERN: [cơ chế tâm lý tổng quát — mô tả hành vi con người, 10-20 từ]\n"
+        f"CHIEU_SAI: [hành động sai → hậu quả cụ thể, 10-15 từ]\n"
+        f"CHIEU_DUNG: [hành động đúng → cơ chế → kết quả, 10-20 từ]\n"
+        f"CONCEPT: [tên concept ngắn tiếng Anh, 3-5 từ]"
+    )
+    try:
+        resp = _client.messages.create(
+            model=SCANNER_MODEL,
+            max_tokens=200,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        text = resp.content[0].text.strip()
+        _print_usage("Concept Extractor (Haiku)", resp.usage.input_tokens, resp.usage.output_tokens, haiku=True)
+
+        def _get(key):
+            m = re.search(rf'{key}:\s*([^\n]+)', text, re.IGNORECASE)
+            return m.group(1).strip() if m else ""
+
+        return {
+            "story_pattern": _get("STORY_PATTERN"),
+            "chieu_sai":     _get("CHIEU_SAI"),
+            "chieu_dung":    _get("CHIEU_DUNG"),
+            "concept":       _get("CONCEPT"),
+        }
+    except Exception as e:
+        print(f"  Concept extraction lỗi: {e}")
+        return {}
+
+
 def _generate_queries_from_pattern(story_pattern: str, chieu_sai: str,
                                     chieu_dung: str, concept: str,
                                     used_stories: list[str]) -> list[str]:
@@ -1208,11 +1243,40 @@ def run_scanner(query: str, auto: bool = False, strategy: dict | None = None) ->
             print(f"  ✗ Pattern scan lỗi: {e} — fallback sang domain scan")
             story_pattern = ""  # trigger fallback
 
-    # ── DOMAIN SCAN: fallback khi không có STORY PATTERN ──
+    # ── EXTRACT PATTERN từ topic nếu chưa có — bỏ domain router ──
+    if not story_pattern:
+        print(f"  [Concept Extraction → Pattern Scan]")
+        extracted = _extract_pattern_from_topic(query)
+        if extracted.get("story_pattern"):
+            story_pattern = extracted["story_pattern"]
+            chieu_sai  = chieu_sai  or extracted["chieu_sai"]
+            chieu_dung = chieu_dung or extracted["chieu_dung"]
+            concept    = concept    or extracted["concept"]
+            print(f"  Pattern: {story_pattern[:80]}")
+            try:
+                if use_deepseek:
+                    text, in_tok, out_tok, searches = _scan_by_pattern_deepseek(
+                        story_pattern, chieu_sai, chieu_dung, concept, scanner_system, used_stories
+                    )
+                else:
+                    text, in_tok, out_tok, searches = _scan_by_pattern_haiku(
+                        story_pattern, chieu_sai, chieu_dung, concept, scanner_system
+                    )
+                domain_results["Pattern"] = text
+                total_in       += in_tok
+                total_out      += out_tok
+                total_searches += searches
+                print(f"\n  ✓ Pattern scan xong ({searches} searches)")
+                story_pattern = "done"  # mark để skip domain fallback
+            except Exception as e:
+                print(f"  ✗ Pattern scan lỗi: {e} — fallback domain scan")
+                story_pattern = ""
+
+    # ── DOMAIN SCAN: last-resort fallback ──
     if not story_pattern:
         strategy_domain = strategy.get("DOMAIN", "")
         chosen_domains = run_router(query, strategy_domain=strategy_domain)
-        print(f"  [Domain Scan] Domains: {', '.join(chosen_domains)}\n")
+        print(f"  [Domain Scan fallback] Domains: {', '.join(chosen_domains)}\n")
 
         scan_query = query
         if concept:
