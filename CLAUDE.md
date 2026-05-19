@@ -154,6 +154,51 @@ Brief file (`{slug}_brief.md`) co-locate với story file cùng folder là inten
 
 ---
 
+## Deploy lên GitHub và VPS
+
+**Cấu trúc:** Code chỉnh trên local (`spades-content-system/`) → push lên GitHub → SSH vào VPS pull về.
+
+**GitHub repo:** `https://github.com/Duongnguyen1107/spades-content-system`
+**VPS:** Hostinger, IP `82.180.163.187`, CloudPanel, domain `diymode.work`
+**Production file:** `app.py` (Flask webhook) tại `/home/diymode/htdocs/diymode.work/`
+
+### Quy trình push và deploy
+
+**Bước 1 — Copy file về git root và push:**
+```bash
+# Từ thư mục d:\Poker Cafe\spades-content-system\
+cp spades-content-system/pipeline.py pipeline.py
+cp spades-content-system/CLAUDE.md CLAUDE.md
+
+git add pipeline.py app.py CLAUDE.md agents/   # thêm file nào đã sửa
+git commit -m "mô tả thay đổi"
+git push origin master:main
+```
+
+**Bước 2 — SSH vào VPS:**
+```powershell
+ssh root@82.180.163.187
+# Nhập password (lấy từ hPanel Hostinger nếu quên)
+```
+
+**Bước 3 — Pull và restart bot:**
+```bash
+cd /home/diymode/htdocs/diymode.work && git pull origin main && kill $(cat /home/diymode/gunicorn.pid) && sleep 2 && su -s /bin/bash diymode -c "cd /home/diymode/htdocs/diymode.work && /home/diymode/venv/bin/gunicorn app:flask_app --bind 0.0.0.0:8081 --workers 1 --timeout 300 --daemon --pid /home/diymode/gunicorn.pid --access-logfile /home/diymode/logs/access.log --error-logfile /home/diymode/logs/error.log"
+```
+
+**Verify bot đang chạy:**
+```bash
+ps aux | grep gunicorn | grep -v grep
+```
+
+### Lưu ý quan trọng
+- `pipeline.py` tồn tại ở 2 chỗ: `spades-content-system/pipeline.py` (local dev) và git root `pipeline.py` (GitHub/VPS). Phải copy thủ công trước khi push.
+- `app.py` chỉ ở git root — đây là production bot (Flask webhook), khác với `scripts/telegram_bot.py` (polling, không dùng trên VPS).
+- Lần đầu push sau `git init` mới cần `--force`. Các lần sau push bình thường.
+- Nếu git pull bị lỗi divergent branches: `git pull origin main --rebase`
+
+---
+
 ## Khi chỉnh sửa agents
 
 - **Thêm rule mới** → thêm vào cả Writer (để agent tuân theo) và Reviewer (để kiểm tra được)
