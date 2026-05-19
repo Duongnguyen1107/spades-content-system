@@ -635,14 +635,38 @@ async def handle_template_choice(update: Update, context: ContextTypes.DEFAULT_T
             anchor_match = re.search(r'<ANCHOR>(.*?)</ANCHOR>', ai_text, re.DOTALL)
             if anchor_match:
                 session["anchor"] = anchor_match.group(1).strip()
-                outside = re.sub(r'<ANCHOR>.*?</ANCHOR>', '', ai_text, flags=re.DOTALL).strip()
+                outside = re.sub(r'<STRATEGY>.*?</STRATEGY>', '',
+                                 re.sub(r'<ANCHOR>.*?</ANCHOR>', '', ai_text, flags=re.DOTALL),
+                                 flags=re.DOTALL).strip()
                 if outside:
                     await update.message.reply_text(outside)
-                anchor_preview = "\n".join(
-                    f"• {l.strip()}" for l in session["anchor"].splitlines() if l.strip()
-                )
+
+                # Gửi full STRATEGY dạng file để không bị cắt
+                strategy_text = session["anchor"]
+                bio = BytesIO(strategy_text.encode("utf-8"))
+                bio.name = "strategy.txt"
+                await update.message.reply_document(bio, filename="strategy.txt")
+
+                # Hiện tóm tắt 3 fields quan trọng nhất trong message ngắn
+                key_fields = {}
+                for line in strategy_text.splitlines():
+                    if ':' in line:
+                        k, _, v = line.partition(':')
+                        key_fields[k.strip()] = v.strip()
+
+                summary_lines = []
+                for label, key in [
+                    ("Story Pattern", "STORY PATTERN"),
+                    ("Chiều sai", "CHIỀU SAI"),
+                    ("Chiều đúng", "CHIỀU ĐÚNG"),
+                ]:
+                    val = key_fields.get(key, "")
+                    if val:
+                        summary_lines.append(f"*{label}:* {val[:120]}")
+
+                summary = "\n\n".join(summary_lines) if summary_lines else "(xem file)"
                 await update.message.reply_text(
-                    f"*Anchor đã rõ:*\n{anchor_preview}\n\nReply *Y* để scan, hoặc tiếp tục chỉnh.",
+                    f"*Strategy đã rõ — tóm tắt:*\n\n{summary}\n\nReply *Y* để scan, hoặc tiếp tục chỉnh.",
                     parse_mode="Markdown",
                 )
                 session["state"] = "anchor_confirm"
