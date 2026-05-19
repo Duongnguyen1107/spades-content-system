@@ -360,15 +360,41 @@ def _generate_search_queries(query: str, domain: str, hints: str, used_stories: 
     if used_stories:
         avoid_note = f"\nCác story đã dùng rồi (KHÔNG tìm lại): {', '.join(s[:50] for s in used_stories[:5])}"
 
+    # Trích STORY PATTERN nếu có — đây là primary search instruction
+    story_pattern = ""
+    concept_note = ""
+    m_pattern = re.search(r'STORY PATTERN cần tìm:\s*([^\n]+)', query)
+    m_concept = re.search(r'CONCEPT cần bridge:\s*([^\n]+)', query)
+    if m_pattern:
+        story_pattern = m_pattern.group(1).strip()
+    if m_concept:
+        concept_note = m_concept.group(1).strip()
+
+    # Topic thuần — bỏ phần STRATEGY block
+    base_topic = query.split("\n\nSTORY PATTERN")[0].split("\n\nANCHOR:")[0].strip()
+
+    if story_pattern:
+        primary = (
+            f"Story pattern cần tìm (QUAN TRỌNG NHẤT — bám sát khi tạo query):\n{story_pattern}"
+        )
+        secondary = f"\nConcept poker cần bridge: {concept_note}" if concept_note else ""
+        topic_line = f"Topic gốc: {base_topic}"
+    else:
+        primary = f"Topic cần bridge sang poker: {base_topic}"
+        secondary = ""
+        topic_line = ""
+
     prompt = (
         f"Sinh đúng 3 search queries cho Tavily để tìm story thật trong domain \"{domain}\".\n\n"
-        f"Topic cần bridge sang poker: {query}\n"
+        f"{primary}{secondary}\n"
+        f"{topic_line}\n"
         f"Domain hints: {hints}{avoid_note}\n\n"
         f"Yêu cầu:\n"
-        f"- Mỗi query tìm story CỤ THỂ: nhân vật thật, sự kiện thật, con số thật\n"
-        f"- Ưu tiên 2022-2025, quen với người Việt Nam 23-40 tuổi\n"
-        f"- 3 queries phải khác nhau hoàn toàn — góc độ khác, nhân vật khác\n"
-        f"- Mỗi query 8-12 từ tiếng Anh, phù hợp search engine\n\n"
+        f"- Query 1: tìm đúng story pattern trên — nhân vật/sự kiện khớp với pattern\n"
+        f"- Query 2: tìm chiều ngược — ai làm đúng, thành công vì sao\n"
+        f"- Query 3: tìm góc khác hoặc nhân vật khác cùng pattern\n"
+        f"- Mỗi query: nhân vật thật, sự kiện thật, 8-12 từ tiếng Anh\n"
+        f"- Ưu tiên 2020-2025, tên quen với người Việt Nam 23-40 tuổi\n\n"
         f"Trả về đúng 3 dòng, mỗi dòng 1 query, không đánh số, không giải thích."
     )
     try:
@@ -406,8 +432,13 @@ def _scan_domain_mini_deepseek(query: str, domain: str, hints: str, scanner_syst
             + "\nPhải tìm story HOÀN TOÀN KHÁC — nhân vật khác, sự kiện khác.\n"
         )
 
+    # Highlight STORY PATTERN cho DeepSeek analyzer
+    m_pattern = re.search(r'STORY PATTERN cần tìm:\s*([^\n]+)', query)
+    pattern_note = f"\n\n⭐ STORY PATTERN CẦN TÌM: {m_pattern.group(1).strip()}" if m_pattern else ""
+    base_topic = query.split("\n\nSTORY PATTERN")[0].split("\n\nANCHOR:")[0].strip()
+
     user = (
-        f"Kết quả tìm kiếm về '{query}' trong domain {domain}:\n\n"
+        f"Kết quả tìm kiếm về '{base_topic}' trong domain {domain}:{pattern_note}\n\n"
         f"{search_context}\n\n"
         f"{'='*60}\n\n"
         f"Focus ONLY on {domain} domain ({hints}).{avoid_note}\n"
@@ -895,12 +926,32 @@ Xuất đầy đủ FACT CHECK REPORT theo format đã định, bao gồm phần
                         max_tokens=6000, use_search=True)
 
 
+def _build_scan_user_prompt(query: str, domain: str, hints: str) -> str:
+    """Xây user prompt cho scanner — highlight STORY PATTERN nếu có."""
+    m_pattern = re.search(r'STORY PATTERN cần tìm:\s*([^\n]+)', query)
+    m_concept = re.search(r'CONCEPT cần bridge:\s*([^\n]+)', query)
+    base_topic = query.split("\n\nSTORY PATTERN")[0].split("\n\nANCHOR:")[0].strip()
+
+    story_hint = ""
+    if m_pattern:
+        story_hint = (
+            f"\n\n⭐ STORY PATTERN ƯU TIÊN TÌM: {m_pattern.group(1).strip()}"
+            + (f"\nConcept cần mirror: {m_concept.group(1).strip()}" if m_concept else "")
+            + "\nSearch queries phải nhắm đúng pattern này — không tìm story chung chung."
+        )
+
+    return (
+        f"/scan {base_topic}{story_hint}\n\n"
+        f"Focus ONLY on {domain} domain ({hints}). "
+    )
+
+
 def _scan_domain_mini(query: str, domain: str, hints: str, scanner_system: str) -> tuple[str, int, int]:
     """Scan 1 domain, không print streaming (chạy trong thread). Trả về (text, in_tok, out_tok)."""
     client = _client
+    base_prompt = _build_scan_user_prompt(query, domain, hints)
     user = (
-        f"/scan {query}\n\n"
-        f"Focus ONLY on {domain} domain ({hints}). "
+        f"{base_prompt}"
         f"Search tối đa 3 lần. "
         f"Tìm 1 story candidate tốt nhất. "
         f"Output đúng 1 STORY block theo format chuẩn rồi dừng — không cần SUMMARY.\n\n"
