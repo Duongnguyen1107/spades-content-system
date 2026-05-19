@@ -190,9 +190,10 @@ async def _run_writer(update: Update, session: dict):
     writer_system = _load_agent(writer)
     loop = asyncio.get_event_loop()
 
+    writer_model = HAIKU if writer == "spades-story-writer" else SONNET
     result = await loop.run_in_executor(
         None,
-        lambda: _call_agent_sync(writer_system, [{"role": "user", "content": user_content}], max_tokens=3000)
+        lambda: _call_agent_sync(writer_system, [{"role": "user", "content": user_content}], max_tokens=3000, model=writer_model)
     )
 
     # Xóa em-dash
