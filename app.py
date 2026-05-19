@@ -23,6 +23,8 @@ from telegram.ext import Application, CommandHandler, MessageHandler, ContextTyp
 
 load_dotenv()
 
+from pipeline import run_scanner as _pipeline_run_scanner, make_slug as _pipeline_make_slug
+
 BASE_DIR = Path(__file__).parent
 
 _anthropic_client = _anthropic_lib.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
@@ -297,25 +299,25 @@ async def handle_content_message(update: Update, text: str):
                 topic = _extract_scan_topic(brief, first_msg)
 
                 await update.message.reply_text(f"Đang tìm story cho: *{topic[:60]}*...", parse_mode="Markdown")
-                stdout, stderr, code = await run_cmd(
-                    [sys.executable, "pipeline.py", "--step", "scan", "--topic", topic]
-                )
-                if code != 0:
-                    await update.message.reply_text(f"Scan lỗi:\n{stderr[-2000:] or stdout[-2000:]}")
+                try:
+                    story_text = await loop.run_in_executor(
+                        None, lambda: _pipeline_run_scanner(topic)
+                    )
+                except Exception as e:
+                    await update.message.reply_text(f"Scan lỗi: {e}")
                     return
 
-                slug = extract_slug(stdout)
-                if not slug:
-                    await update.message.reply_text("Không tìm được story. Ae thử describe story cụ thể hơn?")
-                    return
+                slug = _pipeline_make_slug(topic)
+                story_path = BASE_DIR / "outputs" / "stories" / f"{slug}.md"
+                story_path.parent.mkdir(parents=True, exist_ok=True)
+                story_path.write_text(story_text, encoding="utf-8")
 
                 session["slug"]  = slug
                 session["state"] = "story_pick"
 
-                story_file = latest_file(f"outputs/stories/{slug}*.md")
-                if story_file:
-                    await send_file(update, story_file.read_text(encoding="utf-8"), story_file.name)
-                    stories = parse_story_titles(story_file.read_text(encoding="utf-8"))
+                if story_path.exists():
+                    await send_file(update, story_path.read_text(encoding="utf-8"), story_path.name)
+                    stories = parse_story_titles(story_path.read_text(encoding="utf-8"))
                     if stories:
                         lines = ["*Chọn story để viết bài:*\n"]
                         for idx, title, domain in stories:
