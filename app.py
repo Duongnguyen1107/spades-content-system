@@ -37,14 +37,22 @@ Cách hỏi:
 - Mỗi lượt hỏi đúng 1 câu, ngắn gọn, dùng ngôn ngữ đời thường
 - Đưa ra 3-4 options cụ thể đánh số [1][2][3] + [0] nhập tay — options phải khác nhau về cơ chế
 - Không giải thích dài dòng, không dùng từ kỹ thuật poker
-- Sau 2-3 lượt: tóm tắt anchor và hỏi confirm bằng cách kết thúc bằng "Reply Y để xác nhận, hoặc tiếp tục chỉnh."
+- Sau 2-3 lượt: tóm tắt và hỏi confirm bằng "Reply Y để xác nhận, hoặc tiếp tục chỉnh."
 
-Khi anchor đã đủ rõ VÀ user xác nhận (reply Y/y/yes/ok/đồng ý), output ĐÚNG format này:
-<ANCHOR>
-Khía cạnh: [hành vi/cơ chế cụ thể — 1 câu]
-Poker moment: [khoảnh khắc cụ thể ở bàn poker]
-Story pattern: [tìm story về ai làm gì → hậu quả gì]
-</ANCHOR>"""
+Khi đủ rõ VÀ user xác nhận (reply Y/y/yes/ok/đồng ý), output ĐÚNG format này — không thêm gì khác:
+<STRATEGY>
+CONCEPT      : [cơ chế cốt lõi — X xảy ra → Y, không phải định nghĩa]
+CHIỀU SAI    : [hành động cụ thể người hay làm] → [hậu quả cụ thể ở bàn poker]
+CHIỀU ĐÚNG   : [hành động thay thế] → [lý do cơ học nó work] → [kết quả]
+POKER MOMENT : [khoảnh khắc cụ thể ở bàn — ai, đang làm gì]
+FORMAT       : [Story-Bridge / Personal Reflection]
+AUDIENCE     : [Tier 1 — Chưa chơi / Tier 2 — Mới chơi / Tier 3 — Thường xuyên / Broad]
+HOOK TYPE    : [Kết quả trước / Vào giữa trận / Số liệu đối lập / Câu hỏi tu từ / Đối lập hành động]
+DOMAIN       : [domain tốt nhất — 1 trong: Bóng đá / Esports Gaming / MMA Boxing / Đầu tư Forex Crypto / Kinh doanh thương hiệu lớn / Triết học Stoicism / Hàng không vũ trụ / Lịch sử thế giới / Phim Series triết học]
+STORY PATTERN: [tìm story về ai + làm gì + hậu quả gì — đủ cụ thể để Google]
+EMOTIONAL ARC: [cảm xúc hook — lý do] → [cảm xúc bridge — lý do] → [cảm xúc sau CTA — lý do]
+SHARE TRIGGER: [Identity signal / Recognition gift / Conversation starter] — [element nào kích hoạt]
+</STRATEGY>"""
 TOKEN      = os.getenv("TELEGRAM_BOT_TOKEN")
 WH_SECRET  = os.getenv("WEBHOOK_SECRET", "spades2026bot")
 DOMAIN     = os.getenv("WEBHOOK_DOMAIN", "diymode.work")
@@ -520,10 +528,50 @@ async def cmd_guided(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(outside or ai_text)
 
 
+def _parse_strategy_fields(text: str) -> dict:
+    """Parse <STRATEGY> hoặc <ANCHOR> block thành dict để truyền xuống scanner."""
+    fields = {}
+    # Thử <STRATEGY> trước
+    m = re.search(r'<STRATEGY>(.*?)</STRATEGY>', text, re.DOTALL)
+    if not m:
+        m = re.search(r'<ANCHOR>(.*?)</ANCHOR>', text, re.DOTALL)
+    if not m:
+        return fields
+    for line in m.group(1).splitlines():
+        if ':' in line:
+            k, _, v = line.partition(':')
+            key = k.strip().upper().replace(' ', '_').replace('Ê', 'E').replace('Ô', 'O')
+            fields[key] = v.strip()
+    # Normalize keys từ ANCHOR format sang STRATEGY format
+    if 'STORY_PATTERN' not in fields and 'STORY_PATTERN_' in str(fields):
+        pass
+    if 'KHI_A_C_NH' in fields:  # Khía cạnh
+        fields['CONCEPT'] = fields['KHI_A_C_NH']
+    return fields
+
+
 async def _guided_run_scan(update: Update, session: dict):
     topic = session["topic"]
     anchor = session["anchor"]
-    full_query = f"{topic}\n\nANCHOR:\n{anchor}" if anchor and anchor != topic else topic
+
+    # Parse strategy fields từ anchor để scanner dùng pattern scan
+    strategy_fields = _parse_strategy_fields(anchor) if anchor else {}
+
+    # Xây query với các fields rõ ràng để run_scanner tự parse được
+    if strategy_fields.get("STORY_PATTERN"):
+        parts = [topic]
+        for key, label in [
+            ("STORY_PATTERN", "STORY PATTERN cần tìm"),
+            ("CONCEPT", "CONCEPT cần bridge"),
+            ("CHI_U_SAI", "CHIỀU SAI"),
+            ("CHI_U__NG", "CHIỀU ĐÚNG"),
+        ]:
+            val = strategy_fields.get(key, "")
+            if val:
+                parts.append(f"{label}: {val}")
+        full_query = "\n".join(parts)
+    else:
+        full_query = f"{topic}\n\nANCHOR:\n{anchor}" if anchor and anchor != topic else topic
 
     await update.message.reply_text("Đang scan story (~2-3 phút)...")
     stdout, stderr, code = await run_cmd(

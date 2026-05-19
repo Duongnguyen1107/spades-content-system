@@ -1155,10 +1155,24 @@ def run_scanner(query: str, auto: bool = False, strategy: dict | None = None) ->
     print(f"{'='*60}\n")
 
     strategy = strategy or {}
-    story_pattern = strategy.get("STORY_PATTERN", "")
-    chieu_sai     = strategy.get("CHIỀU_SAI", "")
-    chieu_dung    = strategy.get("CHIỀU_ĐÚNG", "")
-    concept       = strategy.get("CONCEPT", "")
+
+    # Parse từ query string nếu strategy dict chưa có — hỗ trợ cả Telegram flow
+    def _extract(pattern_re: str, text: str) -> str:
+        m = re.search(pattern_re, text, re.IGNORECASE)
+        return m.group(1).strip() if m else ""
+
+    story_pattern = (strategy.get("STORY_PATTERN")
+                     or _extract(r'STORY[_ ]PATTERN[^:]*:\s*([^\n]+)', query)
+                     or _extract(r'Story pattern:\s*([^\n]+)', query))
+    chieu_sai     = (strategy.get("CHIỀU_SAI")
+                     or _extract(r'CHI[ÊE]U[_ ]SAI[^:]*:\s*([^\n]+)', query)
+                     or _extract(r'Chiều sai:\s*([^\n]+)', query))
+    chieu_dung    = (strategy.get("CHIỀU_ĐÚNG")
+                     or _extract(r'CHI[ÊE]U[_ ][ĐD][ÚU]NG[^:]*:\s*([^\n]+)', query)
+                     or _extract(r'Chiều đúng:\s*([^\n]+)', query))
+    concept       = (strategy.get("CONCEPT")
+                     or _extract(r'CONCEPT[^:]*:\s*([^\n]+)', query)
+                     or _extract(r'Khía cạnh:\s*([^\n]+)', query))
 
     scanner_system = load_agent(SCANNER_AGENT)
     domain_results: dict[str, str] = {}
