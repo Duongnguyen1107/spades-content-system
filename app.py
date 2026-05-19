@@ -201,6 +201,21 @@ async def _run_writer(update: Update, session: dict):
     await send_long(update, article)
 
     session["state"] = "post_article"
+
+    # Auto fact-check sau Story Writing vì luôn có claim cụ thể
+    if writer == "spades-story-writer":
+        await update.message.reply_text("Đang tự động fact-check bài...")
+        stdout, stderr, code = await run_cmd(
+            [sys.executable, "pipeline.py", "--step", "factcheck", post_path.stem]
+        )
+        if code == 0:
+            check = latest_file(f"outputs/checks/{post_path.stem}*_check.md")
+            if check:
+                await send_file(update, check.read_text(encoding="utf-8"), check.name)
+                await send_long(update, check.read_text(encoding="utf-8")[:3000])
+        else:
+            await update.message.reply_text(f"Fact-check lỗi:\n{stderr[-1000:] or stdout[-1000:]}")
+
     await update.message.reply_text(
         "Bài xong ✓\n\n"
         "1 — Chỉnh nhỏ (nói chỗ cần sửa)\n"
@@ -227,7 +242,7 @@ async def handle_content_message(update: Update, text: str):
 
         response = await loop.run_in_executor(
             None,
-            lambda: _call_agent_sync(strategist_system, session["messages"], max_tokens=1500)
+            lambda: _call_agent_sync(strategist_system, session["messages"], max_tokens=2500)
         )
         session["messages"].append({"role": "assistant", "content": response})
 
@@ -289,7 +304,7 @@ async def handle_content_message(update: Update, text: str):
             session["messages"].append({"role": "user", "content": text})
             response = await loop.run_in_executor(
                 None,
-                lambda: _call_agent_sync(strategist_system, session["messages"], max_tokens=1500)
+                lambda: _call_agent_sync(strategist_system, session["messages"], max_tokens=2500)
             )
             session["messages"].append({"role": "assistant", "content": response})
 
@@ -326,7 +341,7 @@ async def handle_content_message(update: Update, text: str):
             session["messages"].append({"role": "user", "content": f"[Feedback bài vừa viết] {text}"})
             response = await loop.run_in_executor(
                 None,
-                lambda: _call_agent_sync(strategist_system, session["messages"], max_tokens=1500)
+                lambda: _call_agent_sync(strategist_system, session["messages"], max_tokens=2500)
             )
             session["messages"].append({"role": "assistant", "content": response})
             writer = _detect_brief_type(response)
