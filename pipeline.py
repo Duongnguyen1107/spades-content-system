@@ -33,7 +33,8 @@ WRITER_AGENT      = Path(__file__).parent / "agents" / "spades-story-writer.md"
 STRATEGIST_AGENT  = Path(__file__).parent / "agents" / "spades-strategist.md"
 REVIEWER_AGENT    = Path(__file__).parent / "agents" / "content-reviewer.md"
 MODEL          = "claude-sonnet-4-6"
-SCANNER_MODEL  = "claude-haiku-4-5-20251001"  # dùng cho scanner để giảm chi phí
+SCANNER_MODEL  = "claude-haiku-4-5-20251001"
+CHECKER_MODEL  = "claude-haiku-4-5-20251001"
 
 # Pricing (USD per million tokens)
 PRICE_INPUT         = 3.00   # Sonnet
@@ -867,7 +868,8 @@ def _has_strong_story(text: str) -> bool:
 
 def stream_agent(system: str, user: str, label: str,
                  max_tokens: int = 3000, use_search: bool = False,
-                 max_retries: int = 5, retry_wait: int = 60) -> str:
+                 max_retries: int = 5, retry_wait: int = 60,
+                 model: str = MODEL) -> str:
     client = _client
 
     print(f"\n{'='*60}")
@@ -875,7 +877,7 @@ def stream_agent(system: str, user: str, label: str,
     print(f"{'='*60}\n")
 
     kwargs = dict(
-        model=MODEL,
+        model=model,
         max_tokens=max_tokens,
         system=system,
         messages=[{"role": "user", "content": user}],
@@ -923,7 +925,7 @@ def run_checker(article: str, source_label: str = "") -> str:
 Xuất đầy đủ FACT CHECK REPORT theo format đã định, bao gồm phần BÀI SAU KHI FIX nếu có lỗi."""
     return stream_agent(system, user,
                         label=f"FACT CHECKER — {source_label or 'bài viết'}",
-                        max_tokens=6000, use_search=True)
+                        max_tokens=6000, use_search=True, model=CHECKER_MODEL)
 
 
 def _generate_queries_from_pattern(story_pattern: str, chieu_sai: str,

@@ -71,9 +71,12 @@ def _load_agent(name: str) -> str:
             text = f"{brand}\n\n---\n\n{text}"
     return text
 
-def _call_agent_sync(system: str, messages: list, max_tokens: int = 1500) -> str:
+SONNET = "claude-sonnet-4-6"
+HAIKU  = "claude-haiku-4-5-20251001"
+
+def _call_agent_sync(system: str, messages: list, max_tokens: int = 1500, model: str = SONNET) -> str:
     return _anthropic_client.messages.create(
-        model="claude-sonnet-4-6",
+        model=model,
         max_tokens=max_tokens,
         system=system,
         messages=messages,
@@ -423,7 +426,7 @@ async def _process_brand_update(update: Update, raw: str):
     loop = asyncio.get_event_loop()
     updated = await loop.run_in_executor(
         None,
-        lambda: _call_agent_sync(system, [{"role": "user", "content": user_msg}], max_tokens=2000)
+        lambda: _call_agent_sync(system, [{"role": "user", "content": user_msg}], max_tokens=2000, model=HAIKU)
     )
     brand_path.write_text(updated, encoding="utf-8")
     await update.message.reply_text(
