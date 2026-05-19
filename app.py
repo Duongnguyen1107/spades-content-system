@@ -149,19 +149,20 @@ def parse_story_titles(content: str) -> list[tuple[int, str, str]]:
     sep = "=" * 60
     if sep in content:
         content = content.split(sep)[-1]
-    results, seen = [], set()
+    results, seen_idx = [], set()
     for block in re.split(r'(?=STORY\s*#\d+)', content):
         m_idx = re.search(r'STORY\s*#(\d+)', block)
         if not m_idx:
             continue
         idx = int(m_idx.group(1))
+        if idx in seen_idx:
+            continue
+        seen_idx.add(idx)
         m_title = re.search(r'Tiêu đề\s*[:：]\s*([^\n]+)', block)
         m_domain = re.search(r'DOMAIN\s*[:：]\s*([^\n]+)', block)
         title = m_title.group(1).strip()[:80] if m_title else f"Story #{idx}"
         domain = m_domain.group(1).strip()[:40] if m_domain else ""
-        if title not in seen:
-            seen.add(title)
-            results.append((idx, title, domain))
+        results.append((idx, title, domain))
     return results
 
 def _strip_checklist(text: str) -> str:
