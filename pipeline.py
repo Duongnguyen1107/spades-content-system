@@ -926,6 +926,151 @@ Xuất đầy đủ FACT CHECK REPORT theo format đã định, bao gồm phần
                         max_tokens=6000, use_search=True)
 
 
+def _generate_queries_from_pattern(story_pattern: str, chieu_sai: str,
+                                    chieu_dung: str, concept: str,
+                                    used_stories: list[str]) -> list[str]:
+    """Sinh 3 Tavily queries trực tiếp từ STORY PATTERN — không cần domain."""
+    avoid_note = ""
+    if used_stories:
+        avoid_note = f"\nStory đã dùng rồi — KHÔNG tìm lại: {', '.join(s[:50] for s in used_stories[:5])}"
+
+    prompt = (
+        f"Sinh đúng 3 search queries để tìm story thật trên internet.\n\n"
+        f"STORY PATTERN cần tìm: {story_pattern}\n"
+        f"Chiều sai (ai làm sai → hậu quả): {chieu_sai}\n"
+        f"Chiều đúng (ai làm đúng → thành công): {chieu_dung}\n"
+        f"Concept: {concept}{avoid_note}\n\n"
+        f"Yêu cầu:\n"
+        f"- Query 1: tìm story CHIỀU SAI — nhân vật thật làm điều trong 'chiều sai' và chịu hậu quả cụ thể\n"
+        f"- Query 2: tìm story CHIỀU ĐÚNG — nhân vật thật làm ngược lại và thành công\n"
+        f"- Query 3: tìm story nổi tiếng nhất khớp với pattern tổng thể — bất kỳ domain nào\n"
+        f"- KHÔNG giới hạn domain — tìm ở bất kỳ lĩnh vực nào có story tốt nhất\n"
+        f"- Mỗi query: tên người thật hoặc sự kiện thật, 8-12 từ tiếng Anh\n"
+        f"- Ưu tiên nhân vật quen với người Việt 23-40 tuổi\n\n"
+        f"Trả về đúng 3 dòng, mỗi dòng 1 query, không đánh số, không giải thích."
+    )
+    try:
+        resp = _client.messages.create(
+            model=SCANNER_MODEL,
+            max_tokens=150,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        _print_usage("Query Generator Pattern (Haiku)", resp.usage.input_tokens, resp.usage.output_tokens)
+        queries = [l.strip() for l in resp.content[0].text.strip().split("\n") if l.strip()]
+        return queries[:3] if queries else [story_pattern[:80]]
+    except Exception as e:
+        print(f"  ⚠️ Pattern query generator lỗi: {e}")
+        return [
+            f"{chieu_sai[:60]} real story consequence",
+            f"{chieu_dung[:60]} success case example",
+            f"{story_pattern[:60]} famous case history",
+        ]
+
+
+def _scan_by_pattern_haiku(story_pattern: str, chieu_sai: str, chieu_dung: str,
+                            concept: str, scanner_system: str) -> tuple[str, int, int, int]:
+    """Scan bằng STORY PATTERN trực tiếp — không giới hạn domain. Dùng Haiku + web_search."""
+    user = (
+        f"Tìm story thật khớp với pattern sau — KHÔNG giới hạn domain:\n\n"
+        f"STORY PATTERN: {story_pattern}\n\n"
+        f"CHIỀU SAI (tìm ai làm điều này → hậu quả cụ thể):\n{chieu_sai}\n\n"
+        f"CHIỀU ĐÚNG (tìm ai làm ngược lại → thành công):\n{chieu_dung}\n\n"
+        f"CONCEPT cần bridge sang poker: {concept}\n\n"
+        f"{'='*50}\n"
+        f"Search 3 lần — mỗi lần một góc khác nhau:\n"
+        f"  Search 1: story về chiều sai — ai làm điều đó và chịu hậu quả\n"
+        f"  Search 2: story về chiều đúng — ai làm ngược lại và thành công\n"
+        f"  Search 3: story nổi tiếng nhất khớp pattern — từ bất kỳ domain\n\n"
+        f"Ưu tiên: nhân vật có tên thật, sự kiện verify được, quen với Nam 23-40 tuổi HCM.\n"
+        f"Output 1-2 STORY block tốt nhất theo format chuẩn.\n\n"
+        f"YÊU CẦU BẮT BUỘC:\n"
+        f"- Nhân vật: tên + vai trò + tại sao relevant\n"
+        f"- Setup/Conflict/Mechanism/Payoff: 4 field riêng biệt\n"
+        f"- Mechanism: từng action cụ thể theo thứ tự — không phải 'họ vượt qua'\n"
+        f"- Số liệu: phải có ngữ cảnh\n"
+        f"- Bridge Point 2 chiều:\n"
+        f"  Chiều sai = [hành động] → [hậu quả cụ thể]\n"
+        f"  Chiều đúng = [hành động] → [cơ chế cơ học] → [kết quả]"
+    )
+    kwargs = dict(
+        model=SCANNER_MODEL,
+        max_tokens=3500,
+        system=scanner_system,
+        messages=[{"role": "user", "content": user}],
+        tools=[{"type": "web_search_20250305", "name": "web_search"}],
+    )
+    try:
+        result_text = ""
+        search_count = 0
+        in_tok = out_tok = 0
+        with _client.messages.stream(**kwargs) as stream:
+            for event in stream:
+                if not hasattr(event, "type"):
+                    continue
+                if event.type == "content_block_start":
+                    if hasattr(event, "content_block"):
+                        if getattr(event.content_block, "type", "") == "tool_use":
+                            if getattr(event.content_block, "name", "") == "web_search":
+                                search_count += 1
+                                print(f"  🔍 Pattern search {search_count}...", end="", flush=True)
+                elif event.type == "content_block_delta":
+                    if hasattr(event, "delta") and hasattr(event.delta, "text"):
+                        result_text += event.delta.text
+            final = stream.get_final_message()
+            in_tok = final.usage.input_tokens
+            out_tok = final.usage.output_tokens
+        return result_text, in_tok, out_tok, search_count
+    except Exception as e:
+        print(f"  ✗ Pattern scan lỗi: {e}")
+        return "", 0, 0, 0
+
+
+def _scan_by_pattern_deepseek(story_pattern: str, chieu_sai: str, chieu_dung: str,
+                               concept: str, scanner_system: str,
+                               used_stories: list[str]) -> tuple[str, int, int, int]:
+    """Scan bằng STORY PATTERN trực tiếp dùng Tavily + DeepSeek — không giới hạn domain."""
+    queries = _generate_queries_from_pattern(story_pattern, chieu_sai, chieu_dung, concept, used_stories)
+    searches = [_tavily_search(q, max_results=5) for q in queries]
+    search_count = len(searches)
+    search_context = "\n\n========\n\n".join(_format_tavily(s) for s in searches)
+
+    avoid_note = ""
+    if used_stories:
+        avoid_note = (
+            "\n\n⚠️ STORY ĐÃ DÙNG RỒI — KHÔNG DÙNG LẠI:\n"
+            + "\n".join(f"- {s}" for s in used_stories[:8])
+        )
+
+    user = (
+        f"Kết quả tìm kiếm cho story pattern:\n"
+        f"PATTERN: {story_pattern}\n"
+        f"CHIỀU SAI: {chieu_sai}\n"
+        f"CHIỀU ĐÚNG: {chieu_dung}\n\n"
+        f"{search_context}\n\n{'='*60}\n\n"
+        f"KHÔNG giới hạn domain — chọn story tốt nhất từ kết quả trên.{avoid_note}\n"
+        f"Output 1-2 STORY block tốt nhất theo format chuẩn rồi dừng.\n\n"
+        f"YÊU CẦU BẮT BUỘC:\n"
+        f"- Nhân vật: tên + vai trò + tại sao relevant\n"
+        f"- Setup/Conflict/Mechanism/Payoff: 4 field riêng biệt\n"
+        f"- Mechanism: từng action cụ thể — không phải 'họ vượt qua'\n"
+        f"- Số liệu: phải có ngữ cảnh\n"
+        f"- Bridge Point:\n"
+        f"  Chiều sai = [hành động] → [hậu quả cụ thể]\n"
+        f"  Chiều đúng = [hành động] → [cơ chế cơ học] → [kết quả]"
+    )
+    resp = _deepseek_client.chat.completions.create(
+        model=DEEPSEEK_MODEL,
+        messages=[
+            {"role": "system", "content": scanner_system},
+            {"role": "user", "content": user},
+        ],
+        max_tokens=3500,
+        temperature=0.7,
+    )
+    text = resp.choices[0].message.content or ""
+    return text, resp.usage.prompt_tokens, resp.usage.completion_tokens, search_count
+
+
 def _build_scan_user_prompt(query: str, domain: str, hints: str) -> str:
     """Xây user prompt cho scanner — highlight STORY PATTERN nếu có."""
     m_pattern = re.search(r'STORY PATTERN cần tìm:\s*([^\n]+)', query)
@@ -1010,13 +1155,11 @@ def run_scanner(query: str, auto: bool = False, strategy: dict | None = None) ->
     print(f"{'='*60}\n")
 
     strategy = strategy or {}
-    strategy_domain = strategy.get("DOMAIN", "")
+    story_pattern = strategy.get("STORY_PATTERN", "")
+    chieu_sai     = strategy.get("CHIỀU_SAI", "")
+    chieu_dung    = strategy.get("CHIỀU_ĐÚNG", "")
+    concept       = strategy.get("CONCEPT", "")
 
-    # [A] Router chọn 1-2 domain phù hợp nhất
-    chosen_domains = run_router(query, strategy_domain=strategy_domain)
-    print(f"  Domains được chọn: {', '.join(chosen_domains)}\n")
-
-    # [B] Scan đủ cả 2 domain — không early stop
     scanner_system = load_agent(SCANNER_AGENT)
     domain_results: dict[str, str] = {}
     total_in = total_out = total_searches = 0
@@ -1027,35 +1170,55 @@ def run_scanner(query: str, auto: bool = False, strategy: dict | None = None) ->
     if used_stories:
         print(f"  Story đã dùng gần đây (sẽ tránh): {len(used_stories)} entries")
 
-    # Enrich query với STORY PATTERN từ strategy nếu có
-    scan_query = query
-    if strategy.get("STORY_PATTERN"):
-        scan_query = f"{query}\n\nSTORY PATTERN cần tìm: {strategy['STORY_PATTERN']}"
-    if strategy.get("CONCEPT"):
-        scan_query += f"\nCONCEPT cần bridge: {strategy['CONCEPT']}"
-    if strategy.get("CHIỀU_SAI") or strategy.get("CHIỀU_ĐÚNG"):
-        scan_query += (
-            f"\nCHIỀU SAI: {strategy.get('CHIỀU_SAI', '')}"
-            f"\nCHIỀU ĐÚNG: {strategy.get('CHIỀU_ĐÚNG', '')}"
-        )
-
-    for domain in chosen_domains:
-        hints = _SCAN_DOMAIN_MAP.get(domain, "")
-        print(f"  Scanning {domain} [{scan_label}]...")
+    # ── PATTERN SCAN: khi có STORY PATTERN rõ → search trực tiếp, bỏ domain filter ──
+    if story_pattern:
+        print(f"  [Pattern Scan — không giới hạn domain]")
+        print(f"  Pattern: {story_pattern[:80]}...\n")
         try:
             if use_deepseek:
-                text, in_tok, out_tok, searches = _scan_domain_mini_deepseek(
-                    scan_query, domain, hints, scanner_system, used_stories
+                text, in_tok, out_tok, searches = _scan_by_pattern_deepseek(
+                    story_pattern, chieu_sai, chieu_dung, concept, scanner_system, used_stories
                 )
             else:
-                text, in_tok, out_tok, searches = _scan_domain_mini(scan_query, domain, hints, scanner_system)
-            domain_results[domain] = text
-            total_in       += in_tok
-            total_out      += out_tok
+                text, in_tok, out_tok, searches = _scan_by_pattern_haiku(
+                    story_pattern, chieu_sai, chieu_dung, concept, scanner_system
+                )
+            domain_results["Pattern"] = text
+            total_in += in_tok
+            total_out += out_tok
             total_searches += searches
-            print(f"  ✓ {domain} ({searches} searches)")
+            print(f"\n  ✓ Pattern scan xong ({searches} searches)")
         except Exception as e:
-            print(f"  ✗ {domain}: {e}")
+            print(f"  ✗ Pattern scan lỗi: {e} — fallback sang domain scan")
+            story_pattern = ""  # trigger fallback
+
+    # ── DOMAIN SCAN: fallback khi không có STORY PATTERN ──
+    if not story_pattern:
+        strategy_domain = strategy.get("DOMAIN", "")
+        chosen_domains = run_router(query, strategy_domain=strategy_domain)
+        print(f"  [Domain Scan] Domains: {', '.join(chosen_domains)}\n")
+
+        scan_query = query
+        if concept:
+            scan_query += f"\nCONCEPT cần bridge: {concept}"
+
+        for domain in chosen_domains:
+            hints = _SCAN_DOMAIN_MAP.get(domain, "")
+            print(f"  Scanning {domain} [{scan_label}]...")
+            try:
+                if use_deepseek:
+                    text, in_tok, out_tok, searches = _scan_domain_mini_deepseek(
+                        scan_query, domain, hints, scanner_system, used_stories
+                    )
+                else:
+                    text, in_tok, out_tok, searches = _scan_domain_mini(scan_query, domain, hints, scanner_system)
+                domain_results[domain] = text
+                total_in       += in_tok
+                total_out      += out_tok
+                total_searches += searches
+                print(f"  ✓ {domain} ({searches} searches)")
+            except Exception as e:
+                print(f"  ✗ {domain}: {e}")
 
     scanner_cost = _calc_cost(total_in, total_out, total_searches,
                               haiku=not use_deepseek, deepseek=use_deepseek)
