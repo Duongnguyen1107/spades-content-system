@@ -34,6 +34,7 @@ WEBHOOK_URL = f"https://{DOMAIN}/webhook/{WH_SECRET}"
 # ─── Session management ──────────────────────────────────────────────────────
 
 _sessions: dict[int, dict] = {}
+_update_pending: set[int] = {}  # chat_ids đang chờ paste brand update
 
 def new_session() -> dict:
     return {
@@ -54,12 +55,20 @@ def get_session(chat_id: int) -> dict:
 
 # ─── Agent helpers ───────────────────────────────────────────────────────────
 
+_BRAND_AGENTS = {"spades-strategist", "spades-story-writer", "spades-copywriter", "spades-advertorial"}
+
 def _load_agent(name: str) -> str:
     path = BASE_DIR / "agents" / f"{name}.md"
     text = path.read_text(encoding="utf-8")
     if text.startswith("---"):
         parts = text.split("---", 2)
-        return parts[2].strip() if len(parts) > 2 else text
+        text = parts[2].strip() if len(parts) > 2 else text
+
+    if name in _BRAND_AGENTS:
+        brand_path = BASE_DIR / "brand-context.md"
+        if brand_path.exists():
+            brand = brand_path.read_text(encoding="utf-8")
+            text = f"{brand}\n\n---\n\n{text}"
     return text
 
 def _call_agent_sync(system: str, messages: list, max_tokens: int = 1500) -> str:
@@ -396,6 +405,49 @@ async def handle_content_message(update: Update, text: str):
 
 # ─── Command handlers ─────────────────────────────────────────────────────────
 
+async def _process_brand_update(update: Update, raw: str):
+    brand_path = BASE_DIR / "brand-context.md"
+    current = brand_path.read_text(encoding="utf-8") if brand_path.exists() else ""
+
+    system = (
+        "Bạn là brand manager cho Spades Board Game Cafe.\n"
+        "Nhiệm vụ: nhận thông tin mới từ user → cập nhật vào đúng section của brand-context.md → output toàn bộ file đã cập nhật.\n\n"
+        "Sections hiện có: THÔNG TIN QUÁN / GAME MODES / KHUYẾN MÃI & MARKETING / SỰ KIỆN SẮP TỚI\n"
+        "Nếu thông tin mới không thuộc section nào → tạo section mới phù hợp.\n"
+        "Giữ nguyên thông tin cũ không liên quan đến update.\n"
+        "Chỉ output nội dung file markdown, không giải thích thêm."
+    )
+    user_msg = f"Brand context hiện tại:\n\n{current}\n\nThông tin mới cần cập nhật:\n\n{raw}"
+
+    await update.message.reply_text("Đang cập nhật brand context...")
+    loop = asyncio.get_event_loop()
+    updated = await loop.run_in_executor(
+        None,
+        lambda: _call_agent_sync(system, [{"role": "user", "content": user_msg}], max_tokens=2000)
+    )
+    brand_path.write_text(updated, encoding="utf-8")
+    await update.message.reply_text(
+        "Brand context đã cập nhật ✓\n"
+        "Có hiệu lực ngay từ bài viết tiếp theo.\n\n"
+        f"Xem lại: /showbrand"
+    )
+
+async def cmd_update(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.message.chat_id
+    if context.args:
+        raw = " ".join(context.args)
+        await _process_brand_update(update, raw)
+    else:
+        _update_pending.add(chat_id)
+        await update.message.reply_text("Paste thông tin brand mới vào đây:")
+
+async def cmd_showbrand(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    brand_path = BASE_DIR / "brand-context.md"
+    if brand_path.exists():
+        await send_long(update, brand_path.read_text(encoding="utf-8"))
+    else:
+        await update.message.reply_text("Chưa có brand-context.md.")
+
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "*Spades Content Bot* 🃏\n\n"
@@ -408,7 +460,10 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/list — xem files gần nhất\n"
         "/get `<slug>` — lấy file\n"
         "/factcheck `<slug>` — kiểm tra facts\n"
-        "/cancel — reset conversation",
+        "/cancel — reset conversation\n\n"
+        "*Brand:*\n"
+        "/update — cập nhật thông tin quán (game mode, KM, sự kiện...)\n"
+        "/showbrand — xem brand context hiện tại",
         parse_mode="Markdown",
     )
 
@@ -487,6 +542,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text.strip()
     if not text:
         return
+    chat_id = update.message.chat_id
+    if chat_id in _update_pending:
+        _update_pending.discard(chat_id)
+        await _process_brand_update(update, text)
+        return
     await handle_content_message(update, text)
 
 
@@ -504,6 +564,8 @@ ptb_app.add_handler(CommandHandler("list",      cmd_list))
 ptb_app.add_handler(CommandHandler("get",       cmd_get))
 ptb_app.add_handler(CommandHandler("factcheck", cmd_factcheck))
 ptb_app.add_handler(CommandHandler("review",    cmd_review))
+ptb_app.add_handler(CommandHandler("update",    cmd_update))
+ptb_app.add_handler(CommandHandler("showbrand", cmd_showbrand))
 ptb_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
 asyncio.run_coroutine_threadsafe(ptb_app.initialize(), _loop).result(timeout=10)

@@ -16,16 +16,6 @@ Nhiệm vụ: nhận brief từ `spades-strategist` → đọc toàn bộ brief 
 
 ---
 
-## BRAND SPADES
-
-- Tagline: #NoCashGame — "For a healthier poker community"
-- Chips KHÔNG có giá trị tiền thật, KHÔNG quy đổi
-- Tone: trẻ trung, cộng đồng, ấm, không toxic
-- Tránh tuyệt đối: ngụ ý cờ bạc, ăn tiền, quy đổi
-- Game modes: Sit & Go (casual, 1.5 tiếng, dealer hỗ trợ), Tournament (4-6 tiếng, luật TDA quốc tế), Ultra X (2.5 tiếng, 17k stack, luật nghiêm), Warm Up (newbie)
-
----
-
 ## LAMWORK STYLE
 
 Giọng văn cố định. Không được phép drift.

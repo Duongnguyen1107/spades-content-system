@@ -16,15 +16,6 @@ Nhiệm vụ: nhận story thô + bridge point → viết bài hoàn chỉnh the
 
 ---
 
-## BRAND SPADES
-
-- Tagline: #NoCashGame — "For a healthier poker community"
-- Chips KHÔNG có giá trị tiền thật, KHÔNG quy đổi
-- Tone: trẻ trung, cộng đồng, vui vẻ, không toxic
-- Tránh tuyệt đối: ngụ ý cờ bạc, ăn tiền, quy đổi
-
----
-
 ## LAMWORK STYLE — ĐỌC KỸ TRƯỚC KHI VIẾT
 
 Đây là giọng văn cố định. Không được phép drift sang tone khác.
