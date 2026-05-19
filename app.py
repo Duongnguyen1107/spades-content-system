@@ -15,6 +15,7 @@ from io import BytesIO
 from pathlib import Path
 
 import anthropic as _anthropic_lib
+from openai import OpenAI as _openai_lib
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
 from telegram import Update
@@ -25,6 +26,7 @@ load_dotenv()
 BASE_DIR = Path(__file__).parent
 
 _anthropic_client = _anthropic_lib.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+_openai_client    = _openai_lib(api_key=os.environ.get("OPENAI_API_KEY"))
 
 TOKEN     = os.getenv("TELEGRAM_BOT_TOKEN")
 WH_SECRET = os.getenv("WEBHOOK_SECRET", "spades2026bot")
@@ -71,8 +73,9 @@ def _load_agent(name: str) -> str:
             text = f"{brand}\n\n---\n\n{text}"
     return text
 
-SONNET = "claude-sonnet-4-6"
-HAIKU  = "claude-haiku-4-5-20251001"
+SONNET     = "claude-sonnet-4-6"
+HAIKU      = "claude-haiku-4-5-20251001"
+GPT41MINI  = "gpt-4.1-mini"
 
 def _call_agent_sync(system: str, messages: list, max_tokens: int = 1500, model: str = SONNET) -> str:
     return _anthropic_client.messages.create(
@@ -81,6 +84,14 @@ def _call_agent_sync(system: str, messages: list, max_tokens: int = 1500, model:
         system=system,
         messages=messages,
     ).content[0].text
+
+def _call_openai_sync(system: str, messages: list, max_tokens: int = 3000, model: str = GPT41MINI) -> str:
+    response = _openai_client.chat.completions.create(
+        model=model,
+        max_tokens=max_tokens,
+        messages=[{"role": "system", "content": system}] + messages,
+    )
+    return response.choices[0].message.content
 
 def _detect_brief_type(text: str) -> str | None:
     for writer in ["spades-story-writer", "spades-copywriter", "spades-advertorial"]:
@@ -190,11 +201,16 @@ async def _run_writer(update: Update, session: dict):
     writer_system = _load_agent(writer)
     loop = asyncio.get_event_loop()
 
-    writer_model = HAIKU if writer == "spades-story-writer" else SONNET
-    result = await loop.run_in_executor(
-        None,
-        lambda: _call_agent_sync(writer_system, [{"role": "user", "content": user_content}], max_tokens=3000, model=writer_model)
-    )
+    if writer == "spades-story-writer":
+        result = await loop.run_in_executor(
+            None,
+            lambda: _call_openai_sync(writer_system, [{"role": "user", "content": user_content}], max_tokens=3000)
+        )
+    else:
+        result = await loop.run_in_executor(
+            None,
+            lambda: _call_agent_sync(writer_system, [{"role": "user", "content": user_content}], max_tokens=3000)
+        )
 
     # Xóa em-dash
     result = result.replace(" — ", ", ").replace("— ", ", ").replace(" —", ",")
