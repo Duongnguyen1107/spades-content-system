@@ -204,16 +204,11 @@ async def _run_writer(update: Update, session: dict):
     writer_system = _load_agent(writer)
     loop = asyncio.get_event_loop()
 
-    if writer == "spades-story-writer":
-        result = await loop.run_in_executor(
-            None,
-            lambda: _call_openai_sync(writer_system, [{"role": "user", "content": user_content}], max_tokens=3000)
-        )
-    else:
-        result = await loop.run_in_executor(
-            None,
-            lambda: _call_agent_sync(writer_system, [{"role": "user", "content": user_content}], max_tokens=3000)
-        )
+    writer_model = HAIKU if writer == "spades-story-writer" else SONNET
+    result = await loop.run_in_executor(
+        None,
+        lambda: _call_agent_sync(writer_system, [{"role": "user", "content": user_content}], max_tokens=3000, model=writer_model)
+    )
 
     # Xóa em-dash
     result = result.replace(" — ", ", ").replace("— ", ", ").replace(" —", ",")
