@@ -141,14 +141,15 @@ Fact Checker (Sonnet, web_search)
 ## Cấu trúc thư mục
 
 ```
-spades-content-system/
+d:\Poker Cafe\spades-content-system\   ← git root, cũng là thư mục dev duy nhất
 ├── pipeline.py           ← orchestrator duy nhất
-├── CLAUDE.md          ← context cho Claude Code (file này)
+├── app.py                ← production bot (Flask webhook cho VPS)
+├── CLAUDE.md             ← context cho Claude Code (file này)
 ├── README.md
 ├── requirements.txt
 ├── .env               ← ANTHROPIC_API_KEY
 │
-├── agents/            ← system prompts của 5 agents
+├── agents/            ← system prompts của 8 agents
 ├── scripts/           ← utilities: set_env.ps1, telegram_bot.py
 ├── archive/           ← deprecated: scan.py, write.py, agent.py, config.py
 │
@@ -166,7 +167,7 @@ Brief file (`{slug}_brief.md`) co-locate với story file cùng folder là inten
 
 ## Deploy lên GitHub và VPS
 
-**Cấu trúc:** Code chỉnh trên local (`spades-content-system/`) → push lên GitHub → SSH vào VPS pull về.
+**Một nguồn duy nhất:** Dev ở git root → push GitHub → VPS pull về. Không copy thủ công.
 
 **GitHub repo:** `https://github.com/Duongnguyen1107/spades-content-system`
 **VPS:** Hostinger, IP `82.180.163.187`, CloudPanel, domain `diymode.work`
@@ -174,12 +175,9 @@ Brief file (`{slug}_brief.md`) co-locate với story file cùng folder là inten
 
 ### Quy trình push và deploy
 
-**Bước 1 — Copy file về git root và push:**
-```bash
+**Bước 1 — Push từ git root:**
+```powershell
 # Từ thư mục d:\Poker Cafe\spades-content-system\
-cp spades-content-system/pipeline.py pipeline.py
-cp spades-content-system/CLAUDE.md CLAUDE.md
-
 git add pipeline.py app.py CLAUDE.md agents/   # thêm file nào đã sửa
 git commit -m "mô tả thay đổi"
 git push origin master:main
@@ -202,9 +200,7 @@ ps aux | grep gunicorn | grep -v grep
 ```
 
 ### Lưu ý quan trọng
-- `pipeline.py` tồn tại ở 2 chỗ: `spades-content-system/pipeline.py` (local dev) và git root `pipeline.py` (GitHub/VPS). Phải copy thủ công trước khi push.
-- `app.py` chỉ ở git root — đây là production bot (Flask webhook), khác với `scripts/telegram_bot.py` (polling, không dùng trên VPS).
-- Lần đầu push sau `git init` mới cần `--force`. Các lần sau push bình thường.
+- `app.py` là production bot (Flask webhook), khác với `scripts/telegram_bot.py` (polling, không dùng trên VPS).
 - Nếu git pull bị lỗi divergent branches: `git pull origin main --rebase`
 
 ---
