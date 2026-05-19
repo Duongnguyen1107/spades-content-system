@@ -30,7 +30,7 @@ load_dotenv()
 CHECKER_AGENT     = Path(__file__).parent / "agents" / "fact-checker.md"
 SCANNER_AGENT     = Path(__file__).parent / "agents" / "story-scanner.md"
 WRITER_AGENT      = Path(__file__).parent / "agents" / "spades-story-writer.md"
-STRATEGIST_AGENT  = Path(__file__).parent / "agents" / "content-strategist.md"
+STRATEGIST_AGENT  = Path(__file__).parent / "agents" / "spades-strategist.md"
 REVIEWER_AGENT    = Path(__file__).parent / "agents" / "content-reviewer.md"
 MODEL          = "claude-sonnet-4-6"
 SCANNER_MODEL  = "claude-haiku-4-5-20251001"  # dùng cho scanner để giảm chi phí

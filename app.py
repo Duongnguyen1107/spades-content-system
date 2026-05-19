@@ -43,6 +43,7 @@ def new_session() -> dict:
         "writer":      None,    # "spades-story-writer" | "spades-copywriter" | "spades-advertorial"
         "slug":        None,    # slug sau khi scan story
         "story_num":   "1",
+        "post_slug":   None,    # slug của bài viết vừa xuất
     }
 
 def get_session(chat_id: int) -> dict:
@@ -145,6 +146,14 @@ def _strip_checklist(text: str) -> str:
             return text.split(marker)[0].strip()
     return text
 
+def _extract_story_block(content: str, story_num: str) -> str:
+    """Trích story block theo số từ scanner output. Fallback toàn bộ nếu không tìm được."""
+    blocks = re.split(r'(?=STORY\s*#\d+)', content)
+    for block in blocks:
+        if re.match(rf'\s*STORY\s*#{re.escape(story_num)}\b', block):
+            return block.strip()
+    return content
+
 
 # ─── Writer subagent ─────────────────────────────────────────────────────────
 
@@ -162,7 +171,9 @@ async def _run_writer(update: Update, session: dict):
         story_file = latest_file(f"outputs/stories/{slug}*.md")
         if story_file:
             story_text = story_file.read_text(encoding="utf-8")
-            user_content = f"Story:\n\n{story_text}\n\nBrief:\n\n{brief}"
+            story_num = session.get("story_num", "1")
+            selected_story = _extract_story_block(story_text, story_num)
+            user_content = f"Story:\n\n{selected_story}\n\nBrief:\n\n{brief}"
 
     writer_system = _load_agent(writer)
     loop = asyncio.get_event_loop()
@@ -182,6 +193,7 @@ async def _run_writer(update: Update, session: dict):
     post_path = BASE_DIR / "outputs" / "posts" / f"{safe}_{timestamp}.md"
     post_path.parent.mkdir(parents=True, exist_ok=True)
     post_path.write_text(result, encoding="utf-8")
+    session["post_slug"] = post_path.stem
 
     # Gửi file đầy đủ + bài viết sạch
     await send_file(update, result, post_path.name)
@@ -193,7 +205,9 @@ async def _run_writer(update: Update, session: dict):
         "Bài xong ✓\n\n"
         "1 — Chỉnh nhỏ (nói chỗ cần sửa)\n"
         "2 — Viết lại (giữ brief, chạy lại)\n"
-        "3 — Bài mới"
+        "3 — Bài mới\n"
+        "4 — Fact check\n"
+        "5 — Review bài"
     )
 
 
@@ -324,6 +338,40 @@ async def handle_content_message(update: Update, text: str):
                 await update.message.reply_text("Brief updated ✓\nReply *Y* để viết lại.", parse_mode="Markdown")
             else:
                 await send_long(update, response)
+
+        elif t == "4" or "fact check" in t.lower() or "factcheck" in t.lower():
+            slug = session.get("post_slug")
+            if not slug:
+                await update.message.reply_text("Không tìm thấy slug bài vừa viết.")
+                return
+            await update.message.reply_text(f"Đang fact-check: *{slug}*...", parse_mode="Markdown")
+            stdout, stderr, code = await run_cmd([sys.executable, "pipeline.py", "--step", "factcheck", slug])
+            if code != 0:
+                await update.message.reply_text(f"Lỗi:\n{stderr[-2000:] or stdout[-2000:]}")
+                return
+            check = latest_file(f"outputs/checks/{slug}*_check.md")
+            if check:
+                await send_file(update, check.read_text(encoding="utf-8"), check.name)
+                await send_long(update, check.read_text(encoding="utf-8")[:3000])
+            else:
+                await send_long(update, stdout[-3000:])
+
+        elif t == "5" or "review" in t.lower():
+            slug = session.get("post_slug")
+            if not slug:
+                await update.message.reply_text("Không tìm thấy slug bài vừa viết.")
+                return
+            await update.message.reply_text(f"Đang review: *{slug}*...", parse_mode="Markdown")
+            stdout, stderr, code = await run_cmd([sys.executable, "pipeline.py", "--step", "review", slug])
+            if code != 0:
+                await update.message.reply_text(f"Lỗi:\n{stderr[-2000:] or stdout[-2000:]}")
+                return
+            rev = latest_file(f"outputs/checks/{slug}*_review.md")
+            if rev:
+                await send_file(update, rev.read_text(encoding="utf-8"), rev.name)
+                await send_long(update, rev.read_text(encoding="utf-8")[:3000])
+            else:
+                await send_long(update, stdout[-3000:])
 
         else:
             # Tin nhắn tự do sau bài — coi như bắt đầu bài mới
