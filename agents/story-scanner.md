@@ -123,6 +123,16 @@ Queries bổ sung phải:
 - Kết quả bất ngờ hoặc twist
 - Người Việt Nam 23-40 HCM đã nghe tên hoặc sẽ dễ google thêm
 
+**LOẠI BỎ ngay, không report:**
+- Story không có tên người thật VÀ không phải nguyên lý/hiện tượng phổ biến có research backing → loại
+- Story chỉ có career-long behavior không có khoảnh khắc cụ thể → loại
+- Story là fiction, phim, sách (dù "dựa trên thật") → loại
+
+**Anonymous nhưng vẫn dùng được (Personal Reflection):**
+- Hiện tượng phổ biến có tên gọi, nghiên cứu, hoặc được nhiều nguồn xác nhận (VD: "beginner's luck bias trong bull market", "Dunning-Kruger effect trong trading") → dùng được cho Personal Reflection, KHÔNG dùng cho Story-Bridge
+- Ghi rõ trong output: `FORMAT PHÙ HỢP: Personal Reflection (không có tên người cụ thể)`
+- Story-Bridge BẮT BUỘC tên người thật verify được — nếu anonymous thì tìm story khác cho Story-Bridge
+
 **Bước 3: Evaluate story tìm được**
 
 | Tiêu chí | Câu hỏi | Pass? |
