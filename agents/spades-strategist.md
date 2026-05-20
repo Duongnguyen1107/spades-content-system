@@ -172,7 +172,10 @@ STORY:
   Sự kiện: [tóm tắt story thô]
   Chiều sai: [hành động] → [hậu quả]
   Chiều đúng: [hành động] → [cơ chế] → [kết quả]
-  [Nếu chưa có story → ghi "TÌM STORY: [pattern search để Scanner tìm]"]
+  [Nếu chưa có story → ghi "TÌM STORY: [cơ chế tâm lý phổ quát — KHÔNG dùng từ poker/bàn bài/chip.
+  Mô tả hành vi con người nói chung để Scanner tìm story ở domain khác bridge vào poker.
+  VD đúng: 'người tự tin đọc sai tình huống đối thủ → hành động dựa trên nhận định sai → bị trap'
+  VD sai: 'người chơi poker tự tin đọc vị → bị exploit' — đây là poker, Scanner không tìm được story ngoài đời]"]
 
 HOOK TYPE:
   [ ] Kết quả trước

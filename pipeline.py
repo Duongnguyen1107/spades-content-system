@@ -999,22 +999,23 @@ def _generate_queries_from_pattern(story_pattern: str, chieu_sai: str,
         f"Chiều đúng (ai làm đúng → thành công): {chieu_dung}\n"
         f"Concept: {concept}{avoid_note}\n\n"
         f"Yêu cầu:\n"
-        f"- Query 1: tìm story CHIỀU SAI — nhân vật thật làm điều trong 'chiều sai' và chịu hậu quả cụ thể\n"
-        f"- Query 2: tìm story CHIỀU ĐÚNG — nhân vật thật làm ngược lại và thành công\n"
-        f"- Query 3: tìm story nổi tiếng nhất khớp với pattern tổng thể — bất kỳ domain nào\n"
-        f"- KHÔNG giới hạn domain — tìm ở bất kỳ lĩnh vực nào có story tốt nhất\n"
-        f"- Mỗi query: tên người thật hoặc sự kiện thật, 8-12 từ tiếng Anh\n"
+        f"- Query 1: tìm story CHIỀU SAI — nhân vật thật ngoài đời làm điều trong 'chiều sai' và chịu hậu quả\n"
+        f"- Query 2: tìm story CHIỀU ĐÚNG — nhân vật thật ngoài đời làm ngược lại và thành công\n"
+        f"- Query 3: tìm story nổi tiếng nhất khớp CÙNG CƠ CHẾ TÂM LÝ với pattern — bất kỳ domain nào\n"
+        f"- TUYỆT ĐỐI KHÔNG tìm story về poker/card game — poker là điểm đến của bài, không phải nguồn\n"
+        f"- Domain nên tìm: bóng đá, MMA/boxing, lịch sử quân sự, kinh doanh, esports, khoa học\n"
+        f"- Mỗi query: tên người thật hoặc sự kiện thật, 8-12 từ tiếng Anh, đủ câu không cắt giữa\n"
         f"- Ưu tiên nhân vật quen với người Việt 23-40 tuổi\n\n"
-        f"Trả về đúng 3 dòng, mỗi dòng 1 query, không đánh số, không giải thích."
+        f"Trả về đúng 3 dòng, mỗi dòng 1 query hoàn chỉnh, không đánh số, không giải thích."
     )
     try:
         resp = _client.messages.create(
             model=SCANNER_MODEL,
-            max_tokens=150,
+            max_tokens=250,
             messages=[{"role": "user", "content": prompt}],
         )
         _print_usage("Query Generator Pattern (Haiku)", resp.usage.input_tokens, resp.usage.output_tokens)
-        queries = [l.strip() for l in resp.content[0].text.strip().split("\n") if l.strip()]
+        queries = [l.strip() for l in resp.content[0].text.strip().split("\n") if l.strip() and len(l.strip()) > 8]
         result = queries[:3] if queries else [story_pattern[:80]]
         _scan_log["queries"] = result
         return result
