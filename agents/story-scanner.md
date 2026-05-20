@@ -108,14 +108,14 @@ Query 3 — Cùng cơ chế Z: tìm story từ domain khác cùng cơ chế tâm
 - Query tìm career-long behavior ("suốt sự nghiệp", "throughout career", "always", "consistently") → KHÔNG DÙNG — phải là 1 khoảnh khắc cụ thể có ngày/tỉ số/quyết định rõ
 - Query tìm sự kiện KHÔNG XẢY RA (từ chối thi đấu, match bị cancel) → KHÔNG DÙNG — không có mechanism/payoff
 
-**BẮT BUỘC: Output phải có ít nhất 2 story candidates**
+**BẮT BUỘC: Output phải có ít nhất 3 story candidates**
 
-Nếu sau 3 queries ban đầu chỉ tìm được 0-1 story đạt tiêu chí → PHẢI tự làm thêm 1-2 queries bổ sung trước khi output. Không được output với 1 story duy nhất.
+Sau 3 queries ban đầu, đếm số stories đạt tiêu chí. Nếu thiếu → PHẢI search bổ sung đủ 3 mới được output.
 
-Queries bổ sung phải:
-- Đổi domain hoàn toàn (nếu Q1-Q3 dùng thể thao → thử kinh doanh hoặc lịch sử)
-- Tìm khoảnh khắc cụ thể, không phải career summary
-- VD: "startup founder publicly humiliated by competitor reacted emotionally made worse decision" hoặc "military commander experienced veteran underestimated enemy younger officer lost battle ego"
+Mỗi query fail (reject vì career-long, anonymous không có research, không có incident cụ thể) → thay bằng 1 query bổ sung ngay. Query bổ sung phải:
+- Đổi domain hoàn toàn so với query đã fail
+- Tìm khoảnh khắc cụ thể có ngày/tỉ số/tên người
+- VD thay cho career-long query: "athlete specific match turned point overconfident lost unexpectedly" hoặc "business leader one decision hubris backfired year specific"
 
 **Ưu tiên tìm story có:**
 - Tên người thật + số liệu cụ thể (ngày, tỉ số, tiền, %)
