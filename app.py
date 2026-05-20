@@ -842,29 +842,32 @@ async def cmd_log(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]])
         await update.message.reply_text(caption, reply_markup=keyboard)
 
-async def _send_log_detail(target, slug: str):
-    """Helper gửi log file — dùng cho cả command và callback."""
+async def _send_log_detail_to_message(msg, slug: str):
+    """Gửi log file tới một Message object."""
     log_file = LOG_DIR / f"{slug}_log.md"
     if not log_file.exists():
-        await target.reply_text(f"Không tìm thấy log: {slug}")
+        await msg.reply_text(f"Không tìm thấy log: {slug}")
         return
     content = log_file.read_text(encoding="utf-8")
-    await send_file(target, content, log_file.name)
-    await send_long(target, content[:3000])
+    from io import BytesIO
+    bio = BytesIO(content.encode("utf-8"))
+    await msg.reply_document(bio, filename=log_file.stem + ".txt")
+    for i in range(0, min(len(content), 3000), 4000):
+        await msg.reply_text(content[i:i+4000])
 
 async def cmd_log_detail(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Gửi full log file theo slug."""
     if not context.args:
         await update.message.reply_text("Usage: /log_detail <slug>")
         return
-    await _send_log_detail(update.message, context.args[0])
+    await _send_log_detail_to_message(update.message, context.args[0])
 
 async def callback_log_detail(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Xử lý tap button 📋 Xem detail từ /log."""
     query = update.callback_query
     await query.answer()
     slug = query.data.replace("logdetail:", "")
-    await _send_log_detail(query.message, slug)
+    await _send_log_detail_to_message(query.message, slug)
 
 async def cmd_factcheck(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
