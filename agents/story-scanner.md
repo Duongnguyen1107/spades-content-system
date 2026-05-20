@@ -105,6 +105,17 @@ Query 3 — Cùng cơ chế Z: tìm story từ domain khác cùng cơ chế tâm
 - Query phải mô tả CƠ CHẾ hoạt động — không phải tên nhân vật
 - Nếu nghĩ đến tên người nổi tiếng trước → DỪNG, hỏi lại: "cơ chế tâm lý ở đây là gì?" → dùng cơ chế đó làm query
 - Exception duy nhất: nếu cơ chế Z gợi ngay 1 sự kiện cụ thể nổi tiếng và rõ ràng (VD: Zidane headbutt = mất kiểm soát cảm xúc dưới áp lực) → được dùng tên + mô tả cơ chế, không chỉ tên
+- Query tìm career-long behavior ("suốt sự nghiệp", "throughout career", "always", "consistently") → KHÔNG DÙNG — phải là 1 khoảnh khắc cụ thể có ngày/tỉ số/quyết định rõ
+- Query tìm sự kiện KHÔNG XẢY RA (từ chối thi đấu, match bị cancel) → KHÔNG DÙNG — không có mechanism/payoff
+
+**BẮT BUỘC: Output phải có ít nhất 2 story candidates**
+
+Nếu sau 3 queries ban đầu chỉ tìm được 0-1 story đạt tiêu chí → PHẢI tự làm thêm 1-2 queries bổ sung trước khi output. Không được output với 1 story duy nhất.
+
+Queries bổ sung phải:
+- Đổi domain hoàn toàn (nếu Q1-Q3 dùng thể thao → thử kinh doanh hoặc lịch sử)
+- Tìm khoảnh khắc cụ thể, không phải career summary
+- VD: "startup founder publicly humiliated by competitor reacted emotionally made worse decision" hoặc "military commander experienced veteran underestimated enemy younger officer lost battle ego"
 
 **Ưu tiên tìm story có:**
 - Tên người thật + số liệu cụ thể (ngày, tỉ số, tiền, %)
