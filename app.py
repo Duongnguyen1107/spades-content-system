@@ -830,7 +830,7 @@ async def cmd_log(update: Update, context: ContextTypes.DEFAULT_TYPE):
         topic = re.search(r"# Run Log — (.+)", text)
         ts    = re.search(r"\*\*Timestamp:\*\* (.+)", text)
         bq    = re.findall(r"- (STRONG|MODERATE|WEAK)", text)
-        model = re.search(r"- Model: `(.+?)`", text)
+        model = re.search(r"- Model: `?(.+?)`?$", text, re.MULTILINE)
         slug  = f.stem.replace("_log", "")
         caption = (
             f"{i}. {topic.group(1)[:60] if topic else slug}\n"
