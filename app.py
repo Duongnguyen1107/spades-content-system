@@ -6,6 +6,7 @@ Deploy: CloudPanel Python Site tại diymode.work
 """
 
 import asyncio
+import json
 import os
 import re
 import sys
@@ -23,7 +24,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, ContextTyp
 
 load_dotenv()
 
-from pipeline import run_scanner as _pipeline_run_scanner, make_slug as _pipeline_make_slug
+from pipeline import run_scanner as _pipeline_run_scanner, make_slug as _pipeline_make_slug, get_scan_log as _get_scan_log
 
 BASE_DIR = Path(__file__).parent
 
@@ -165,6 +166,116 @@ def _build_scan_query(brief: str, fallback: str) -> str:
 def _story_has_strong(text: str) -> bool:
     return bool(re.search(r"BRIDGE QUALITY.*STRONG", text, re.IGNORECASE))
 
+# ─── Run logging ──────────────────────────────────────────────────────────────
+
+LOG_DIR = BASE_DIR / "outputs" / "run_logs"
+
+def _init_run_log(session: dict) -> None:
+    """Khởi tạo run_log trong session cho một bài mới."""
+    session["run_log"] = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "topic": session["messages"][0]["content"][:120] if session["messages"] else "",
+        "strategist": {},
+        "scanner": {},
+        "writer": {},
+        "factcheck": {},
+    }
+
+def _save_log_files(session: dict) -> Path | None:
+    """Lưu full log ra file markdown, trả về path."""
+    log = session.get("run_log")
+    slug = session.get("post_slug", "unknown")
+    if not log:
+        return None
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    lines = [f"# Run Log — {log['topic']}", f"**Timestamp:** {log['timestamp']}", ""]
+
+    # Strategist
+    s = log.get("strategist", {})
+    if s:
+        lines += ["## Strategist", f"- Turns: {s.get('turns', '?')}",
+                  f"- Angle: {s.get('angle', '?')}",
+                  f"- Library REF: {s.get('library_ref', '?')}",
+                  f"- TÌM STORY: {s.get('tim_story', 'không')}", ""]
+
+    # Scanner
+    sc = log.get("scanner", {})
+    if sc:
+        lines += ["## Scanner"]
+        lines.append(f"- Pattern: {sc.get('pattern', '?')[:120]}")
+        lines.append(f"- Concept: {sc.get('concept', '?')}")
+        lines.append(f"- Chiều sai: {sc.get('chieu_sai', '?')[:100]}")
+        lines.append(f"- Chiều đúng: {sc.get('chieu_dung', '?')[:100]}")
+        lines.append("")
+        lines.append("### Queries gửi Tavily")
+        for i, q in enumerate(sc.get("queries", []), 1):
+            tq = sc.get("tavily_per_query", [{}]*3)
+            n = tq[i-1].get("results", "?") if i-1 < len(tq) else "?"
+            lines.append(f"{i}. `{q}` → {n} kết quả")
+        lines.append("")
+        lines.append("### Bridge quality stories tìm được")
+        for bq in sc.get("bridge_quality", []):
+            lines.append(f"- {bq}")
+        lines.append(f"\n### DeepSeek raw output ({sc.get('model', 'DeepSeek')})")
+        lines.append("```")
+        lines.append(sc.get("deepseek_raw", sc.get("haiku_raw", "(trống)"))[:3000])
+        lines.append("```\n")
+
+    # Writer
+    w = log.get("writer", {})
+    if w:
+        lines += ["## Writer", f"- Model: {w.get('model', '?')}",
+                  f"- Keys injected: {w.get('keys', '?')}",
+                  f"- Em-dash stripped: {w.get('em_dash_stripped', 0)}", ""]
+        lines.append("### Brief (700 chars đầu)")
+        lines.append("```")
+        lines.append(w.get("brief_preview", "")[:700])
+        lines.append("```\n")
+        lines.append("### Library entries injected (500 chars đầu)")
+        lines.append("```")
+        lines.append(w.get("library_preview", "(none)")[:500])
+        lines.append("```\n")
+        lines.append("### Raw model output (2000 chars đầu)")
+        lines.append("```")
+        lines.append(w.get("raw_output", "")[:2000])
+        lines.append("```\n")
+
+    # Factcheck
+    fc = log.get("factcheck", {})
+    if fc:
+        lines += ["## Fact Check",
+                  f"- Claims: {fc.get('claims', '?')} | ✅ {fc.get('verified', '?')} | ❌ {fc.get('wrong', '?')}",
+                  f"- Verdict: {fc.get('verdict', '?')}", ""]
+
+    path = LOG_DIR / f"{slug}_log.md"
+    path.write_text("\n".join(lines), encoding="utf-8")
+    return path
+
+def _format_scanner_tg(sc: dict) -> str:
+    """Format scanner log thành Telegram message ngắn."""
+    lines = ["🔍 *Scanner log*"]
+    lines.append(f"Pattern: `{sc.get('pattern','?')[:80]}`")
+    queries = sc.get("queries", [])
+    tq = sc.get("tavily_per_query", [])
+    if queries:
+        lines.append("*Queries → Tavily results:*")
+        for i, q in enumerate(queries):
+            n = tq[i].get("results", "?") if i < len(tq) else "?"
+            lines.append(f"  {i+1}. {q[:70]} → *{n}*")
+    bqs = sc.get("bridge_quality", [])
+    if bqs:
+        lines.append(f"Bridge quality: {' | '.join(bqs)}")
+    return "\n".join(lines)
+
+def _format_writer_tg(w: dict, slug: str) -> str:
+    """Format writer log thành Telegram message ngắn."""
+    lines = ["✍️ *Writer log*",
+             f"Model: `{w.get('model','?')}`",
+             f"Keys: `{w.get('keys','none')}`",
+             f"Em\\-dash stripped: {w.get('em_dash_stripped',0)}",
+             f"Full log: /log\\_detail {slug}"]
+    return "\n".join(lines)
+
 def _parse_library_refs(brief: str) -> list[str]:
     """Extract keys từ LIBRARY REF field trong brief."""
     m = re.search(r"LIBRARY REF:\s*([^\n]+)", brief)
@@ -295,19 +406,21 @@ async def _run_writer(update: Update, session: dict):
     writer_system = _load_agent(writer, library_entries=library_entries)
     loop = asyncio.get_event_loop()
 
+    model_used = DEEPSEEK_MODEL if _deepseek_client else (HAIKU if writer == "spades-story-writer" else SONNET)
+
     if _deepseek_client:
         result = await loop.run_in_executor(
             None,
             lambda: _call_deepseek_sync(writer_system, [{"role": "user", "content": user_content}], max_tokens=3000)
         )
     else:
-        # Fallback: Story Writer → Haiku, các writer khác → Sonnet
         writer_model = HAIKU if writer == "spades-story-writer" else SONNET
         result = await loop.run_in_executor(
             None,
             lambda: _call_agent_sync(writer_system, [{"role": "user", "content": user_content}], max_tokens=3000, model=writer_model)
         )
 
+    raw_result = result  # giữ lại trước khi strip em-dash
     # Xóa em-dash
     result = result.replace(" — ", ", ").replace("— ", ", ").replace(" —", ",")
 
@@ -320,10 +433,34 @@ async def _run_writer(update: Update, session: dict):
     post_path.write_text(result, encoding="utf-8")
     session["post_slug"] = post_path.stem
 
+    # Log writer details
+    em_count = raw_result.count(" — ") + raw_result.count("— ") + raw_result.count(" —")
+    keys_injected = "|".join(_parse_library_refs(brief)) or "none"
+    w_log = {
+        "model": model_used,
+        "keys": keys_injected,
+        "em_dash_stripped": em_count,
+        "brief_preview": brief[:700],
+        "library_preview": library_entries[:500] if library_entries else "",
+        "raw_output": raw_result[:3000],
+    }
+    if "run_log" not in session:
+        _init_run_log(session)
+    session["run_log"]["writer"] = w_log
+    _save_log_files(session)
+
     # Gửi file đầy đủ + bài viết sạch
     await send_file(update, result, post_path.name)
     article = _strip_checklist(result)
     await send_long(update, article)
+
+    # Gửi writer log
+    try:
+        await update.message.reply_text(
+            _format_writer_tg(w_log, post_path.stem), parse_mode="Markdown"
+        )
+    except Exception:
+        pass
 
     session["state"] = "post_article"
 
@@ -397,6 +534,7 @@ async def handle_content_message(update: Update, text: str):
                 pattern_short = m_pat.group(1).strip()[:60] if m_pat else first_msg[:60]
 
                 session["scan_query"] = scan_query
+                _init_run_log(session)
 
                 await update.message.reply_text(f"Đang tìm story cho: *{pattern_short}*...", parse_mode="Markdown")
                 try:
@@ -406,6 +544,26 @@ async def handle_content_message(update: Update, text: str):
                 except Exception as e:
                     await update.message.reply_text(f"Scan lỗi: {e}")
                     return
+
+                # Capture scan log từ pipeline
+                scan_log = _get_scan_log()
+                bridge_quality = re.findall(r"BRIDGE QUALITY[:\s]*(STRONG|MODERATE|WEAK)", story_text, re.IGNORECASE)
+                scan_log["bridge_quality"] = bridge_quality
+                session["run_log"]["scanner"] = scan_log
+                session["run_log"]["strategist"] = {
+                    "turns": len([m for m in session["messages"] if m["role"] == "user"]),
+                    "angle": re.search(r"ANGLE:\s*(.+?)(?:\n|$)", brief, re.IGNORECASE) and
+                             re.search(r"ANGLE:\s*(.+?)(?:\n|$)", brief, re.IGNORECASE).group(1).strip(),
+                    "library_ref": re.search(r"LIBRARY REF:\s*(.+?)(?:\n|$)", brief, re.IGNORECASE) and
+                                   re.search(r"LIBRARY REF:\s*(.+?)(?:\n|$)", brief, re.IGNORECASE).group(1).strip(),
+                    "tim_story": pattern_short,
+                }
+
+                # Gửi scanner log lên Telegram
+                try:
+                    await update.message.reply_text(_format_scanner_tg(scan_log), parse_mode="Markdown")
+                except Exception:
+                    pass
 
                 slug = _pipeline_make_slug(pattern_short)
                 story_path = BASE_DIR / "outputs" / "stories" / f"{slug}.md"
@@ -654,6 +812,45 @@ async def cmd_get(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
     await update.message.reply_text(f"Không tìm thấy file cho: `{slug}`", parse_mode="Markdown")
 
+async def cmd_log(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Liệt kê 5 log gần nhất."""
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    files = sorted(LOG_DIR.glob("*_log.md"), key=lambda f: f.stat().st_mtime, reverse=True)[:5]
+    if not files:
+        await update.message.reply_text("Chưa có run log nào.")
+        return
+    lines = ["*5 run log gần nhất:*\n"]
+    for f in files:
+        text = f.read_text(encoding="utf-8")
+        # Lấy dòng topic và timestamp
+        topic = re.search(r"# Run Log — (.+)", text)
+        ts    = re.search(r"\*\*Timestamp:\*\* (.+)", text)
+        bq    = re.findall(r"- (STRONG|MODERATE|WEAK)", text)
+        model = re.search(r"- Model: `(.+?)`", text)
+        slug  = f.stem.replace("_log", "")
+        lines.append(
+            f"• `{slug}`\n"
+            f"  {ts.group(1) if ts else ''} | {topic.group(1)[:50] if topic else ''}\n"
+            f"  Bridge: {', '.join(bq) or 'N/A'} | Model: {model.group(1) if model else 'N/A'}\n"
+            f"  → /log\\_detail {slug}"
+        )
+    await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
+
+async def cmd_log_detail(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Gửi full log file theo slug."""
+    if not context.args:
+        await update.message.reply_text("Usage: /log\\_detail <slug>", parse_mode="Markdown")
+        return
+    slug = context.args[0]
+    log_file = LOG_DIR / f"{slug}_log.md"
+    if not log_file.exists():
+        await update.message.reply_text(f"Không tìm thấy log: `{slug}`", parse_mode="Markdown")
+        return
+    await send_file(update, log_file.read_text(encoding="utf-8"), log_file.name)
+    # Gửi preview 3000 chars đầu
+    preview = log_file.read_text(encoding="utf-8")[:3000]
+    await send_long(update, preview)
+
 async def cmd_factcheck(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text("Usage: /factcheck <slug>")
@@ -709,15 +906,17 @@ threading.Thread(target=_loop.run_forever, daemon=True).start()
 
 ptb_app = Application.builder().token(TOKEN).build()
 
-ptb_app.add_handler(CommandHandler("start",     cmd_start))
-ptb_app.add_handler(CommandHandler("help",      cmd_start))
-ptb_app.add_handler(CommandHandler("cancel",    cmd_cancel))
-ptb_app.add_handler(CommandHandler("list",      cmd_list))
-ptb_app.add_handler(CommandHandler("get",       cmd_get))
-ptb_app.add_handler(CommandHandler("factcheck", cmd_factcheck))
-ptb_app.add_handler(CommandHandler("review",    cmd_review))
-ptb_app.add_handler(CommandHandler("update",    cmd_update))
-ptb_app.add_handler(CommandHandler("showbrand", cmd_showbrand))
+ptb_app.add_handler(CommandHandler("start",      cmd_start))
+ptb_app.add_handler(CommandHandler("help",       cmd_start))
+ptb_app.add_handler(CommandHandler("cancel",     cmd_cancel))
+ptb_app.add_handler(CommandHandler("list",       cmd_list))
+ptb_app.add_handler(CommandHandler("get",        cmd_get))
+ptb_app.add_handler(CommandHandler("factcheck",  cmd_factcheck))
+ptb_app.add_handler(CommandHandler("review",     cmd_review))
+ptb_app.add_handler(CommandHandler("update",     cmd_update))
+ptb_app.add_handler(CommandHandler("showbrand",  cmd_showbrand))
+ptb_app.add_handler(CommandHandler("log",        cmd_log))
+ptb_app.add_handler(CommandHandler("log_detail", cmd_log_detail))
 ptb_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
 asyncio.run_coroutine_threadsafe(ptb_app.initialize(), _loop).result(timeout=10)

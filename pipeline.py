@@ -63,6 +63,23 @@ except ImportError:
 
 DEEPSEEK_MODEL = "deepseek-chat"
 
+# ─── Scan log accumulator ─────────────────────────────────────────────────────
+_scan_log: dict = {}
+
+def _reset_scan_log():
+    global _scan_log
+    _scan_log = {
+        "pattern": "", "concept": "", "chieu_sai": "", "chieu_dung": "",
+        "queries": [], "tavily_per_query": [], "deepseek_raw": "",
+        "haiku_raw": "", "bridge_quality": [], "stories_found": 0,
+    }
+
+def get_scan_log() -> dict:
+    """Trả về scan log hiện tại — gọi từ app.py sau khi run_scanner() xong."""
+    return dict(_scan_log)
+
+_reset_scan_log()
+
 # 8 domain — router chọn 2 phù hợp nhất với topic
 # Ưu tiên domain quen thuộc với Nam 23-40 HCM
 _SCAN_DOMAINS = [
@@ -998,14 +1015,18 @@ def _generate_queries_from_pattern(story_pattern: str, chieu_sai: str,
         )
         _print_usage("Query Generator Pattern (Haiku)", resp.usage.input_tokens, resp.usage.output_tokens)
         queries = [l.strip() for l in resp.content[0].text.strip().split("\n") if l.strip()]
-        return queries[:3] if queries else [story_pattern[:80]]
+        result = queries[:3] if queries else [story_pattern[:80]]
+        _scan_log["queries"] = result
+        return result
     except Exception as e:
         print(f"  ⚠️ Pattern query generator lỗi: {e}")
-        return [
+        fallback = [
             f"{chieu_sai[:60]} real story consequence",
             f"{chieu_dung[:60]} success case example",
             f"{story_pattern[:60]} famous case history",
         ]
+        _scan_log["queries"] = fallback
+        return fallback
 
 
 def _scan_by_pattern_haiku(story_pattern: str, chieu_sai: str, chieu_dung: str,
@@ -1060,6 +1081,7 @@ def _scan_by_pattern_haiku(story_pattern: str, chieu_sai: str, chieu_dung: str,
             final = stream.get_final_message()
             in_tok = final.usage.input_tokens
             out_tok = final.usage.output_tokens
+        _scan_log["haiku_raw"] = result_text
         return result_text, in_tok, out_tok, search_count
     except Exception as e:
         print(f"  ✗ Pattern scan lỗi: {e}")
@@ -1070,9 +1092,22 @@ def _scan_by_pattern_deepseek(story_pattern: str, chieu_sai: str, chieu_dung: st
                                concept: str, scanner_system: str,
                                used_stories: list[str]) -> tuple[str, int, int, int]:
     """Scan bằng STORY PATTERN trực tiếp dùng Tavily + DeepSeek — không giới hạn domain."""
+    # Log pattern info
+    _scan_log["pattern"]   = story_pattern
+    _scan_log["concept"]   = concept
+    _scan_log["chieu_sai"] = chieu_sai
+    _scan_log["chieu_dung"]= chieu_dung
+
     queries = _generate_queries_from_pattern(story_pattern, chieu_sai, chieu_dung, concept, used_stories)
     searches = [_tavily_search(q, max_results=5) for q in queries]
     search_count = len(searches)
+
+    # Log Tavily per-query result counts
+    _scan_log["tavily_per_query"] = [
+        {"query": q, "results": len(s.get("results", []))}
+        for q, s in zip(queries, searches)
+    ]
+
     search_context = "\n\n========\n\n".join(_format_tavily(s) for s in searches)
 
     avoid_note = ""
@@ -1109,6 +1144,7 @@ def _scan_by_pattern_deepseek(story_pattern: str, chieu_sai: str, chieu_dung: st
         temperature=0.7,
     )
     text = resp.choices[0].message.content or ""
+    _scan_log["deepseek_raw"] = text  # full DeepSeek analysis output
     return text, resp.usage.prompt_tokens, resp.usage.completion_tokens, search_count
 
 
@@ -1191,6 +1227,8 @@ def _scan_domain_mini(query: str, domain: str, hints: str, scanner_system: str) 
 
 def run_scanner(query: str, auto: bool = False, strategy: dict | None = None) -> str:
     """Parallel domain scan + evaluate call."""
+    _reset_scan_log()  # fresh log mỗi lần scan
+
     print(f"\n{'='*60}")
     print(f"  STORY SCANNER — {query[:80]}{'...' if len(query) > 80 else ''}")
     print(f"{'='*60}\n")
