@@ -19,8 +19,8 @@ import anthropic as _anthropic_lib
 from openai import OpenAI as _openai_lib
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify
-from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
 
 load_dotenv()
 
@@ -819,42 +819,52 @@ async def cmd_get(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"Không tìm thấy file cho: `{slug}`", parse_mode="Markdown")
 
 async def cmd_log(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Liệt kê 5 log gần nhất."""
+    """Liệt kê 5 log gần nhất với button xem detail."""
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     files = sorted(LOG_DIR.glob("*_log.md"), key=lambda f: f.stat().st_mtime, reverse=True)[:5]
     if not files:
         await update.message.reply_text("Chưa có run log nào.")
         return
-    lines = ["5 run log gần nhất:\n"]
-    for f in files:
+    for i, f in enumerate(files, 1):
         text = f.read_text(encoding="utf-8")
         topic = re.search(r"# Run Log — (.+)", text)
         ts    = re.search(r"\*\*Timestamp:\*\* (.+)", text)
         bq    = re.findall(r"- (STRONG|MODERATE|WEAK)", text)
         model = re.search(r"- Model: `(.+?)`", text)
         slug  = f.stem.replace("_log", "")
-        lines.append(
-            f"• {slug}\n"
-            f"  {ts.group(1) if ts else ''} | {topic.group(1)[:50] if topic else ''}\n"
-            f"  Bridge: {', '.join(bq) or 'N/A'} | Model: {model.group(1) if model else 'N/A'}\n"
-            f"  /log_detail {slug}"
+        caption = (
+            f"{i}. {topic.group(1)[:60] if topic else slug}\n"
+            f"   {ts.group(1) if ts else ''}\n"
+            f"   Bridge: {', '.join(bq) or 'N/A'} | Model: {model.group(1) if model else 'N/A'}"
         )
-    await update.message.reply_text("\n".join(lines))
+        keyboard = InlineKeyboardMarkup([[
+            InlineKeyboardButton("📋 Xem detail", callback_data=f"logdetail:{slug}")
+        ]])
+        await update.message.reply_text(caption, reply_markup=keyboard)
+
+async def _send_log_detail(target, slug: str):
+    """Helper gửi log file — dùng cho cả command và callback."""
+    log_file = LOG_DIR / f"{slug}_log.md"
+    if not log_file.exists():
+        await target.reply_text(f"Không tìm thấy log: {slug}")
+        return
+    content = log_file.read_text(encoding="utf-8")
+    await send_file(target, content, log_file.name)
+    await send_long(target, content[:3000])
 
 async def cmd_log_detail(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Gửi full log file theo slug."""
     if not context.args:
-        await update.message.reply_text("Usage: /log\\_detail <slug>", parse_mode="Markdown")
+        await update.message.reply_text("Usage: /log_detail <slug>")
         return
-    slug = context.args[0]
-    log_file = LOG_DIR / f"{slug}_log.md"
-    if not log_file.exists():
-        await update.message.reply_text(f"Không tìm thấy log: `{slug}`", parse_mode="Markdown")
-        return
-    await send_file(update, log_file.read_text(encoding="utf-8"), log_file.name)
-    # Gửi preview 3000 chars đầu
-    preview = log_file.read_text(encoding="utf-8")[:3000]
-    await send_long(update, preview)
+    await _send_log_detail(update.message, context.args[0])
+
+async def callback_log_detail(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Xử lý tap button 📋 Xem detail từ /log."""
+    query = update.callback_query
+    await query.answer()
+    slug = query.data.replace("logdetail:", "")
+    await _send_log_detail(query.message, slug)
 
 async def cmd_factcheck(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
@@ -922,6 +932,7 @@ ptb_app.add_handler(CommandHandler("update",     cmd_update))
 ptb_app.add_handler(CommandHandler("showbrand",  cmd_showbrand))
 ptb_app.add_handler(CommandHandler("log",        cmd_log))
 ptb_app.add_handler(CommandHandler("log_detail", cmd_log_detail))
+ptb_app.add_handler(CallbackQueryHandler(callback_log_detail, pattern=r"^logdetail:"))
 ptb_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
 asyncio.run_coroutine_threadsafe(ptb_app.initialize(), _loop).result(timeout=10)
