@@ -149,6 +149,8 @@ Poker: bị 3-bet → bản năng defend → call với hand không đủ equity
 Khi nào gợi ý: topic về toxic, tilt khi thua với newbie, bình luận hand người khác
 Poker: người mới đánh bại mình → cảm thấy bị xúc phạm → thay đổi play style để "dạy bài học" → ego điều khiển bankroll.
 
+<!-- @include: shared/library/index.md -->
+
 ---
 
 ## SCHEMA BRIEF — STORY WRITING

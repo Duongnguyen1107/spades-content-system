@@ -567,7 +567,11 @@ def print_cost_summary() -> None:
 def load_agent(path: Path) -> str:
     if not path.exists():
         raise FileNotFoundError(f"Agent file không tìm thấy: {path}")
-    return path.read_text(encoding="utf-8")
+    text = path.read_text(encoding="utf-8")
+    def _load_include(m):
+        inc_path = path.parent / m.group(1).strip()
+        return inc_path.read_text(encoding="utf-8") if inc_path.exists() else m.group(0)
+    return re.sub(r'<!--\s*@include:\s*(.+?)\s*-->', _load_include, text)
 
 
 def _with_retry(fn, max_retries: int = 5, wait_s: int = 60):

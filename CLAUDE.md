@@ -133,6 +133,69 @@ Bài 300-600 từ kể chuyện người thật trong community.
 
 ---
 
+## Shared rules & Library — @include system
+
+### Cơ chế @include
+`_load_agent()` trong `app.py` và `load_agent()` trong `pipeline.py` đều xử lý directive:
+```
+<!-- @include: shared/voice-rules.md -->
+```
+Directive được resolve trước khi truyền vào API. Đặt ở bất kỳ đâu trong body agent file.
+
+**Khi thêm agent mới:** thêm 2 dòng `@include` vào đầu file, không cần sửa code.
+
+### agents/shared/ — cấu trúc
+
+```
+agents/shared/
+├── voice-rules.md          ← Lamwork style chung (xưng mình/ae, em-dash, tiếng Anh test)
+│                             Load bởi: tất cả 3 writer agents
+│
+└── library/
+    ├── index.md            ← Concept index nhẹ (~800 tokens) cho Strategist
+    │                         Load bởi: spades-strategist.md
+    ├── tam-ly.md           ← 29 bài tâm lý poker (31KB)
+    ├── khai-niem.md        ← 10 bài khái niệm poker (10KB)
+    ├── dinh-ly.md          ←  4 bài định lý poker (4.5KB)
+    └── co-ban.md           ← 10 bài cơ bản poker (11KB) — KHÔNG load vào writer
+```
+
+**Story writer load:** `voice-rules.md` + `library/tam-ly.md` + `library/khai-niem.md` + `library/dinh-ly.md` (~15K tokens)
+**Strategist load:** `library/index.md` (~4K tokens, chỉ index — không load full library)
+
+### Format mỗi entry trong library
+
+```
+**Tên khái niệm:** [tên 2-6 từ]
+**Định nghĩa:** [1-2 câu]
+**Cơ chế tâm lý:** [WHY chiều sai xảy ra — đây là "Z" trong bridge test]
+**Chiều sai:** [hành động → hậu quả]
+**Chiều đúng:** [hành động → cơ chế → kết quả]
+**Ví dụ bàn:** [tình huống cụ thể 2-3 câu]
+*Nguồn: url*
+```
+
+`Cơ chế tâm lý` là field quan trọng nhất — là cơ chế Z để bridge: story ngoài đời và poker chia sẻ cùng Z.
+
+### Cập nhật library
+
+```powershell
+# Rebuild 1 category (ví dụ khi thêm bài mới vào tam-ly)
+python scripts/build_poker_library.py tam-ly
+
+# Rebuild toàn bộ
+python scripts/build_poker_library.py
+
+# Audit kiểm tra entries bị truncated/missing
+python scripts/audit_library.py
+```
+
+**Thêm bài mới:** thêm URL vào `ARTICLE_URLS` trong `scripts/build_poker_library.py`, chạy rebuild category tương ứng.
+
+**Quy tắc no cash game:** Library không được dùng "tiền", "lợi nhuận", "$X", "tài chính" — dùng "chip", "kết quả", "thắng pot" thay thế. Script `scripts/fix_nocashgame.py` để kiểm tra và fix hàng loạt.
+
+---
+
 ## app.py — kiến trúc mới (v2)
 
 `app.py` là Telegram webhook bot. Kiến trúc session-based thay cho state machine cũ.
@@ -197,7 +260,7 @@ d:\Poker Cafe\spades-content-system\   ← git root, cũng là thư mục dev du
 ├── CLAUDE.md             ← context cho Claude Code (file này)
 ├── PLAN.md               ← roadmap build và quality checklist
 ├── README.md
-├── requirements.txt
+├── requirements.txt      ← bao gồm beautifulsoup4 (dùng cho library scripts)
 ├── .env               ← ANTHROPIC_API_KEY, TELEGRAM_BOT_TOKEN
 │
 ├── agents/
@@ -209,9 +272,21 @@ d:\Poker Cafe\spades-content-system\   ← git root, cũng là thư mục dev du
 │   ├── fact-checker.md           ← verify facts
 │   ├── content-reviewer.md       ← standalone reviewer
 │   ├── content-strategist.md     ← legacy brief writer
-│   └── *.backup.md               ← backup trước khi nâng cấp
+│   ├── *.backup.md               ← backup trước khi nâng cấp
+│   └── shared/                   ← shared rules & library (@include system)
+│       ├── voice-rules.md        ← lamwork style chung
+│       └── library/
+│           ├── index.md          ← concept index cho Strategist
+│           ├── tam-ly.md         ← 29 bài tâm lý
+│           ├── khai-niem.md      ← 10 bài khái niệm
+│           ├── dinh-ly.md        ←  4 bài định lý
+│           └── co-ban.md         ← 10 bài cơ bản (không load vào writer)
 │
-├── scripts/           ← utilities
+├── scripts/
+│   ├── build_poker_library.py    ← scrape + build library từ wikipoker.net
+│   ├── audit_library.py          ← kiểm tra entries bị truncated/missing
+│   └── fix_nocashgame.py         ← remove money references khỏi library
+│
 ├── archive/           ← deprecated code
 │
 └── outputs/
@@ -259,3 +334,7 @@ Nếu git pull lỗi: `git pull origin main --rebase`
 - **Thêm format mới** → tạo writer agent mới + mở rộng spades-strategist.md (thêm schema brief và detection logic)
 - **Thêm/bỏ domain scan** → sửa `_SCAN_DOMAINS` và `_ROUTER_PROMPT` trong `pipeline.py`
 - **Backup trước khi sửa agent quan trọng** → `cp agents/X.md agents/X.backup.md`
+- **Đổi voice rule** → chỉ sửa `agents/shared/voice-rules.md` — tất cả writer agents tự nhận
+- **Thêm agent mới** → tạo file `.md` mới + thêm `<!-- @include: shared/voice-rules.md -->` vào đầu
+- **Thêm bài mới vào library** → thêm URL vào `ARTICLE_URLS` trong `scripts/build_poker_library.py` → chạy `python scripts/build_poker_library.py [category]`
+- **Kiểm tra library** → chạy `python scripts/audit_library.py` (expect: "OK: 53 entries | Issues: 0")

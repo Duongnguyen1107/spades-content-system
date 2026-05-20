@@ -61,12 +61,19 @@ def get_session(chat_id: int) -> dict:
 
 _BRAND_AGENTS = {"spades-strategist", "spades-story-writer", "spades-copywriter", "spades-advertorial"}
 
+def _resolve_includes(text: str, agents_dir: Path) -> str:
+    def _load_include(m):
+        inc_path = agents_dir / m.group(1).strip()
+        return inc_path.read_text(encoding="utf-8") if inc_path.exists() else m.group(0)
+    return re.sub(r'<!--\s*@include:\s*(.+?)\s*-->', _load_include, text)
+
 def _load_agent(name: str) -> str:
     path = BASE_DIR / "agents" / f"{name}.md"
     text = path.read_text(encoding="utf-8")
     if text.startswith("---"):
         parts = text.split("---", 2)
         text = parts[2].strip() if len(parts) > 2 else text
+    text = _resolve_includes(text, BASE_DIR / "agents")
 
     if name in _BRAND_AGENTS:
         brand_path = BASE_DIR / "brand-context.md"
