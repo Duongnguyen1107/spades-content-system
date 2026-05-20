@@ -553,7 +553,7 @@ async def handle_content_message(update: Update, text: str):
 
                 # Capture scan log từ pipeline
                 scan_log = _get_scan_log()
-                bridge_quality = re.findall(r"BRIDGE QUALITY[:\s]*(STRONG|MODERATE|WEAK)", story_text, re.IGNORECASE)
+                bridge_quality = re.findall(r"BRIDGE QUALITY[*:\s]*(STRONG|MODERATE|WEAK)", story_text, re.IGNORECASE)
                 scan_log["bridge_quality"] = bridge_quality
                 session["run_log"]["scanner"] = scan_log
                 session["run_log"]["strategist"] = {
