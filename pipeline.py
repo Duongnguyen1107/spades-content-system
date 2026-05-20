@@ -1125,7 +1125,7 @@ def _scan_by_pattern_deepseek(story_pattern: str, chieu_sai: str, chieu_dung: st
         f"CHIỀU ĐÚNG: {chieu_dung}\n\n"
         f"{search_context}\n\n{'='*60}\n\n"
         f"KHÔNG giới hạn domain — chọn story tốt nhất từ kết quả trên.{avoid_note}\n"
-        f"Output 1-2 STORY block tốt nhất theo format chuẩn rồi dừng.\n\n"
+        f"Output ĐỦ 3 STORY block theo format chuẩn. Nếu chỉ tìm được 2 story đạt tiêu chí thì output 2, không bịa thêm.\n\n"
         f"YÊU CẦU BẮT BUỘC:\n"
         f"- Nhân vật: tên + vai trò + tại sao relevant\n"
         f"- Setup/Conflict/Mechanism/Payoff: 4 field riêng biệt\n"
@@ -1145,7 +1145,40 @@ def _scan_by_pattern_deepseek(story_pattern: str, chieu_sai: str, chieu_dung: st
         temperature=0.7,
     )
     text = resp.choices[0].message.content or ""
-    _scan_log["deepseek_raw"] = text  # full DeepSeek analysis output
+    _scan_log["deepseek_raw"] = text
+
+    # Retry nếu chỉ tìm được <2 stories — chạy thêm vòng Tavily với queries khác domain
+    story_count = len(re.findall(r'STORY\s*#\d+', text))
+    if story_count < 2:
+        print(f"  ⚠️ Chỉ tìm được {story_count} story — chạy retry với queries khác domain...")
+        retry_queries = _generate_queries_from_pattern(
+            story_pattern, chieu_sai, chieu_dung, concept,
+            used_stories + [story_pattern]  # tránh trùng domain cũ
+        )
+        retry_searches = [_tavily_search(q, max_results=5) for q in retry_queries]
+        search_count += len(retry_searches)
+        retry_context = "\n\n========\n\n".join(_format_tavily(s) for s in retry_searches)
+        retry_user = (
+            f"Kết quả tìm kiếm BỔ SUNG — lần trước chỉ tìm được {story_count} story:\n"
+            f"PATTERN: {story_pattern}\n\n"
+            f"{retry_context}\n\n{'='*60}\n\n"
+            f"Tìm thêm ít nhất 1-2 story MỚI từ kết quả này (domain khác với lần trước).\n"
+            f"Tiếp tục đánh số từ #{story_count+1}. Format chuẩn.\n"
+            f"Chiều sai: {chieu_sai}\nChiều đúng: {chieu_dung}"
+        )
+        retry_resp = _deepseek_client.chat.completions.create(
+            model=DEEPSEEK_MODEL,
+            messages=[
+                {"role": "system", "content": scanner_system},
+                {"role": "user", "content": retry_user},
+            ],
+            max_tokens=2500,
+            temperature=0.7,
+        )
+        retry_text = retry_resp.choices[0].message.content or ""
+        text = text + "\n\n" + retry_text
+        _scan_log["deepseek_raw"] = text
+
     return text, resp.usage.prompt_tokens, resp.usage.completion_tokens, search_count
 
 
