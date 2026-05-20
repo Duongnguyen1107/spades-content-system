@@ -88,6 +88,8 @@ Không phải template cứng — là flow tự nhiên. Nhưng phải có đủ 
 
 **1. Anchor story — phải đủ 4 nhịp bên trong**
 
+> **BẮT BUỘC:** Nếu input có phần "STORY BẮT BUỘC" hoặc "Story:" → dùng đúng story đó. KHÔNG được tự bịa scenario poker thay thế. Nhân vật tên thật trong story phải có mặt trong bài.
+
 Story không phải là "kể sơ qua để vào poker." Story là một câu chuyện hoàn chỉnh, có thể đứng độc lập mà không cần phần poker.
 
 Bốn nhịp bắt buộc:

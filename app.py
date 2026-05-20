@@ -396,7 +396,12 @@ async def _run_writer(update: Update, session: dict):
             story_text = story_file.read_text(encoding="utf-8")
             story_num = session.get("story_num", "1")
             selected_story = _extract_story_block(story_text, story_num)
-            user_content = f"Story:\n\n{selected_story}\n\nBrief:\n\n{brief}"
+            user_content = (
+                f"⚠️ STORY BẮT BUỘC — Dùng đúng story dưới đây làm Anchor Story. "
+                f"KHÔNG tự bịa scenario poker thay thế. Nhân vật tên thật trong story phải xuất hiện trong bài:\n\n"
+                f"{selected_story}\n\n"
+                f"Brief:\n\n{brief}"
+            )
 
     # Selective library injection cho Story Writer
     library_entries = ""
