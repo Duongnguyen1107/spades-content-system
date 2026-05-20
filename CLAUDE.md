@@ -47,6 +47,8 @@ User nhắn plain text vào bot → Strategist xử lý toàn bộ. Không cần
 - `/get <slug>` — lấy file theo slug
 - `/factcheck <slug>` — kiểm tra facts bài viết
 - `/review <slug>` — chấm điểm bài (standalone)
+- `/log` — xem 5 run log gần nhất (queries, bridge quality, model)
+- `/log_detail <slug>` — nhận full log file để debug scanner/writer
 - `/cancel` — reset conversation
 
 **Flow sau khi nhận bài:**
@@ -227,6 +229,13 @@ python scripts/audit_library.py
 
 **Retry scan:** User nhắn `0`, `tìm lại`, `tim lai`, hoặc `retry` trong state `story_pick` → scanner chạy lại với cùng query, lưu file mới với suffix `_r2`. Bot hiển thị ⚠️ nếu không có story nào đạt BRIDGE QUALITY: STRONG.
 
+**Run logging:** Sau mỗi stage, bot gửi log message ngay trên Telegram:
+- Sau Scanner: 3 queries đã gửi Tavily + số kết quả/query + bridge quality
+- Sau Writer: model dùng, keys injected, số em-dash stripped
+- Full log lưu tại `outputs/run_logs/{post_slug}_log.md`
+- `/log` — xem 5 run gần nhất
+- `/log_detail <slug>` — nhận full log file (queries, Tavily results count, DeepSeek raw output, writer raw output)
+
 **Các dict cũ đã bỏ:** `_pending_guided`, `_pending_story`, `_pending_templates` — không còn trong codebase.
 
 ---
@@ -255,8 +264,14 @@ python pipeline.py --pipeline "tư duy logic" --guided
 
 **Pattern Scan (primary)** — khi brief có `TÌM STORY:`:
 - app.py build rich query gồm: STORY PATTERN (từ TÌM STORY:) + ANGLE + CHIỀU SAI/ĐÚNG POKER (từ brief) → truyền vào `run_scanner()`
-- Scanner dùng rich query để sinh 3 search queries sát angle hơn: chiều sai / chiều đúng / broad
+- Scanner sinh 3 queries: chiều sai / chiều đúng / cùng cơ chế Z (không phải "nổi tiếng nhất")
+- **TUYỆT ĐỐI KHÔNG tìm story về poker** — poker là điểm đến, không phải nguồn story
+- Domain tìm: bóng đá, MMA, lịch sử quân sự, kinh doanh, esports — TRỪ poker
 - Story từ bất kỳ domain nào — domain router chỉ là fallback cuối khi Pattern Scan lỗi
+
+**TÌM STORY trong brief phải viết bằng cơ chế tâm lý phổ quát:**
+- Đúng: *"người tự tin đọc sai tình huống → hành động dựa trên nhận định sai → bị trap"*
+- Sai: *"người chơi poker tự tin đọc vị → bị exploit"* — đây là poker, Scanner không tìm được story ngoài đời
 
 **Domain Scan (fallback)** — khi dùng `--step scan` trực tiếp:
 - 9 domains: `Bóng đá | Esports/Gaming | MMA/Boxing | Đầu tư/Forex/Crypto | Kinh doanh thương hiệu lớn | Triết học/Stoicism | Hàng không vũ trụ | Lịch sử thế giới | Phim/Series triết học`
@@ -305,6 +320,7 @@ d:\Poker Cafe\spades-content-system\   ← git root, cũng là thư mục dev du
     ├── stories/       ← {slug}.md (scanner) + {slug}_brief.md
     ├── posts/         ← {slug}.md (writer output)
     ├── checks/        ← {slug}_review.md và {slug}_check.md
+    ├── run_logs/      ← {post_slug}_log.md (full log mỗi run: queries, Tavily, DeepSeek raw, writer raw)
     └── content_log.json
 ```
 
