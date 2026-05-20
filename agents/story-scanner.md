@@ -72,31 +72,39 @@ Map topic sang cảm xúc phổ quát — đây là cái sẽ bridge sang poker:
 - overconfidence → "lợi thế làm mờ phán đoán"
 - discipline → "làm đúng khi áp lực muốn làm khác"
 
-**Bước 2: Xây search queries từ domain và hints được truyền vào**
+**Bước 2: Xây search queries từ CƠ CHẾ TÂM LÝ — không phải từ tên người nổi tiếng**
 
-Domain và hints đã được chỉ định trong user message (`Focus ONLY on [DOMAIN] domain ([hints])`).
-Dùng domain đó làm trung tâm. Xây 3 queries theo pattern:
+Input đã có: STORY PATTERN, CONCEPT, CHIỀU SAI, CHIỀU ĐÚNG từ brief.
+Dùng cơ chế đó làm trung tâm, KHÔNG chọn người nổi tiếng trước rồi gắn emotion sau.
 
 ```
-Query 1 — Tìm story cụ thể trong domain:
-  "[nhân vật/sự kiện quen thuộc trong domain] [cảm xúc cốt lõi]"
-  VD domain Bóng đá + topic tilt: "Zidane headbutt 2006 World Cup final emotion"
-  VD domain MMA + topic tilt: "McGregor Khabib UFC 229 mental game breakdown"
+Query 1 — Chiều sai: tìm story người/team làm đúng hành động CHIỀU SAI → hậu quả cụ thể
+  Pattern: "[domain] [hành động sai cụ thể theo CHIỀU SAI] [kết quả tệ]"
+  VD CHIỀU SAI "đặt mục tiêu theo kết quả → variance → thay đổi sai":
+    → "tennis player changed training after unlucky loss and entered long losing streak"
+  VD CHIỀU SAI "tin vào read → bị exploit":
+    → "chess player trusted pattern recognition wrong move cost championship"
+  KHÔNG ĐƯỢC: "Van Basten injury 1993" — đây là tên người, không phải cơ chế
 
-Query 2 — Tìm story underdog / unexpected trong domain:
-  "[domain] [upset / comeback / underdog] [năm gần đây]"
-  VD domain Bóng đá: "football biggest upset underdog win 2024"
-  VD domain F1: "F1 rain race unexpected result strategy"
+Query 2 — Chiều đúng: tìm story người/team làm đúng hành động CHIỀU ĐÚNG → kết quả tốt
+  Pattern: "[domain] [hành động đúng cụ thể theo CHIỀU ĐÚNG] [kết quả tốt / không thay đổi sau thất bại]"
+  VD CHIỀU ĐÚNG "giữ nguyên process sau variance":
+    → "athlete maintained same preparation routine after bad luck result and recovered"
+  VD CHIỀU ĐÚNG "đặt câu hỏi về read":
+    → "coach questioned own analysis instead of acting on assumption won match"
 
-Query 3 — Tìm chiều sai: người làm sai điều đó và thất bại vì sao:
-  "[domain] [failed because overconfident / wrong approach / couldn't adapt] [năm gần đây]"
-  VD domain Bóng đá: "football team lost because overconfident tactical mistake 2024"
-  VD domain Kinh doanh: "startup failed because scaled too fast ignored fundamentals"
-  VD domain MMA: "fighter lost UFC because game plan wrong couldn't adjust"
-  VD domain Phim / Series: "real story behind film character made wrong decision consequence"
-
-Mục tiêu Query 3: tìm được chiều sai để ghép với chiều đúng từ Query 1-2. Story có cả 2 chiều từ search = Writer không phải tự bịa.
+Query 3 — Cùng cơ chế Z: tìm story từ domain khác cùng cơ chế tâm lý phổ quát
+  Pattern: "[domain khác với Q1-Q2] [cơ chế Z phổ quát — không phải poker]"
+  VD cơ chế Z "outcome-goal → variance → wrong adjustment":
+    → "musician changed performance style after competition loss regretted it later"
+  VD cơ chế Z "pattern recognition overconfidence":
+    → "investor analyst overconfident market read acted on wrong signal lost"
 ```
+
+**Quy tắc bắt buộc khi xây query:**
+- Query phải mô tả CƠ CHẾ hoạt động — không phải tên nhân vật
+- Nếu nghĩ đến tên người nổi tiếng trước → DỪNG, hỏi lại: "cơ chế tâm lý ở đây là gì?" → dùng cơ chế đó làm query
+- Exception duy nhất: nếu cơ chế Z gợi ngay 1 sự kiện cụ thể nổi tiếng và rõ ràng (VD: Zidane headbutt = mất kiểm soát cảm xúc dưới áp lực) → được dùng tên + mô tả cơ chế, không chỉ tên
 
 **Ưu tiên tìm story có:**
 - Tên người thật + số liệu cụ thể (ngày, tỉ số, tiền, %)
