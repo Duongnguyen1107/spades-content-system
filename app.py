@@ -819,22 +819,21 @@ async def cmd_log(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not files:
         await update.message.reply_text("Chưa có run log nào.")
         return
-    lines = ["*5 run log gần nhất:*\n"]
+    lines = ["5 run log gần nhất:\n"]
     for f in files:
         text = f.read_text(encoding="utf-8")
-        # Lấy dòng topic và timestamp
         topic = re.search(r"# Run Log — (.+)", text)
         ts    = re.search(r"\*\*Timestamp:\*\* (.+)", text)
         bq    = re.findall(r"- (STRONG|MODERATE|WEAK)", text)
         model = re.search(r"- Model: `(.+?)`", text)
         slug  = f.stem.replace("_log", "")
         lines.append(
-            f"• `{slug}`\n"
+            f"• {slug}\n"
             f"  {ts.group(1) if ts else ''} | {topic.group(1)[:50] if topic else ''}\n"
             f"  Bridge: {', '.join(bq) or 'N/A'} | Model: {model.group(1) if model else 'N/A'}\n"
-            f"  → /log\\_detail {slug}"
+            f"  /log_detail {slug}"
         )
-    await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
+    await update.message.reply_text("\n".join(lines))
 
 async def cmd_log_detail(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Gửi full log file theo slug."""
