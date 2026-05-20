@@ -218,7 +218,8 @@ def _save_log_files(session: dict) -> Path | None:
             lines.append(f"- {bq}")
         lines.append(f"\n### DeepSeek raw output ({sc.get('model', 'DeepSeek')})")
         lines.append("```")
-        lines.append(sc.get("deepseek_raw", sc.get("haiku_raw", "(trống)"))[:3000])
+        raw_sc = sc.get("deepseek_raw", sc.get("haiku_raw", "(trống)"))[:3000].replace("```", "~~~")
+        lines.append(raw_sc)
         lines.append("```\n")
 
     # Writer
@@ -229,15 +230,15 @@ def _save_log_files(session: dict) -> Path | None:
                   f"- Em-dash stripped: {w.get('em_dash_stripped', 0)}", ""]
         lines.append("### Brief (700 chars đầu)")
         lines.append("```")
-        lines.append(w.get("brief_preview", "")[:700])
+        lines.append(w.get("brief_preview", "")[:700].replace("```", "~~~"))
         lines.append("```\n")
         lines.append("### Library entries injected (500 chars đầu)")
         lines.append("```")
-        lines.append(w.get("library_preview", "(none)")[:500])
+        lines.append(w.get("library_preview", "(none)")[:500].replace("```", "~~~"))
         lines.append("```\n")
         lines.append("### Raw model output (2000 chars đầu)")
         lines.append("```")
-        lines.append(w.get("raw_output", "")[:2000])
+        lines.append(w.get("raw_output", "")[:2000].replace("```", "~~~"))
         lines.append("```\n")
 
     # Factcheck
