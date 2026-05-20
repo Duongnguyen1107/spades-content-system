@@ -200,6 +200,10 @@ SHARE TRIGGER:
 BRAND VOICE: [góc nhìn thật của owner nếu có — để trống nếu không]
 
 CTA: [có/không — nội dung gợi ý nếu có]
+
+LIBRARY REF: [key1 | key2 | key3]
+  Chọn tối đa 3 keys từ index.md liên quan nhất đến ANGLE và POKER LENS.
+  Nếu không có concept phù hợp → ghi "none"
 ```
 
 ---

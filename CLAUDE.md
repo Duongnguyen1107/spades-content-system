@@ -59,11 +59,11 @@ Bot hỏi: `1 — Chỉnh nhỏ | 2 — Viết lại | 3 — Bài mới`
 | File | Vai trò | Model | Gọi bởi |
 |------|---------|-------|---------|
 | `agents/spades-strategist.md` | Orchestrator: nhận input → phỏng vấn → brief → gọi đúng writer | Sonnet | app.py |
-| `agents/spades-story-writer.md` | Story Writing: thought leadership, bridge story → poker insight | Sonnet | Strategist |
-| `agents/spades-copywriter.md` | Copywriting: bán cảm giác hoặc chứng minh tính năng | Sonnet | Strategist |
-| `agents/spades-advertorial.md` | Advertorial: kể chuyện người thật trong community | Sonnet | Strategist |
-| `agents/story-scanner.md` | Tìm story thật theo pattern (chỉ Story Writing có TÌM STORY:) | Haiku | app.py sau khi nhận brief |
-| `agents/fact-checker.md` | Verify facts, fix inline với strikethrough | Sonnet | pipeline.py (`--step factcheck`) |
+| `agents/spades-story-writer.md` | Story Writing: thought leadership, bridge story → poker insight | **DeepSeek V3** (fallback: Haiku) | Strategist |
+| `agents/spades-copywriter.md` | Copywriting: bán cảm giác hoặc chứng minh tính năng | **DeepSeek V3** (fallback: Sonnet) | Strategist |
+| `agents/spades-advertorial.md` | Advertorial: kể chuyện người thật trong community | **DeepSeek V3** (fallback: Sonnet) | Strategist |
+| `agents/story-scanner.md` | Tìm story thật theo pattern (chỉ Story Writing có TÌM STORY:) | Haiku queries + DeepSeek V3 analysis | app.py sau khi nhận brief |
+| `agents/fact-checker.md` | Verify facts, fix inline với strikethrough | Haiku + web_search | pipeline.py (`--step factcheck`) |
 | `agents/content-reviewer.md` | Chấm 7 tiêu chí — standalone only | Sonnet | pipeline.py (`--step review`) |
 | `agents/content-strategist.md` | Legacy brief writer — dùng trong pipeline.py cũ | Sonnet | pipeline.py (`--step brief`) |
 
@@ -152,16 +152,23 @@ agents/shared/
 │                             Load bởi: tất cả 3 writer agents
 │
 └── library/
-    ├── index.md            ← Concept index nhẹ (~800 tokens) cho Strategist
+    ├── index.md            ← Concept index với keys — Strategist đọc để điền LIBRARY REF
     │                         Load bởi: spades-strategist.md
-    ├── tam-ly.md           ← 29 bài tâm lý poker (31KB)
-    ├── khai-niem.md        ← 10 bài khái niệm poker (10KB)
-    ├── dinh-ly.md          ←  4 bài định lý poker (4.5KB)
-    └── co-ban.md           ← 10 bài cơ bản poker (11KB) — KHÔNG load vào writer
+    ├── tam-ly.md           ← 22 bài tâm lý poker — có <!-- key: slug --> mỗi entry
+    ├── khai-niem.md        ← 15 bài khái niệm poker — có <!-- key: slug --> mỗi entry
+    ├── dinh-ly.md          ←  4 bài định lý poker — luôn load toàn bộ, không cần key
+    └── co-ban.md           ← Placeholder — entries đã chuyển sang khai-niem.md
 ```
 
-**Story writer load:** `voice-rules.md` + `library/tam-ly.md` + `library/khai-niem.md` + `library/dinh-ly.md` (~15K tokens)
-**Strategist load:** `library/index.md` (~4K tokens, chỉ index — không load full library)
+**Selective library loading (mới):** Story Writer KHÔNG load toàn bộ library nữa. Thay vào đó:
+- Strategist điền `LIBRARY REF: key1 | key2 | key3` trong brief (tối đa 3 keys từ index)
+- `app.py` parse LIBRARY REF → extract đúng entries đó từ library files → inject vào Writer
+- `dinh-ly.md` luôn load tự động (4 entries, 932 tokens)
+- Nếu `LIBRARY REF: none` → Writer chỉ dùng dinh-ly + bank 8 góc tâm lý trong base prompt
+
+**Token savings:** ~7,249 → ~800 tokens cho library (93% giảm) mỗi lần chạy.
+
+**Strategist load:** `library/index.md` — index có keys rõ ràng cho từng entry, Strategist chọn keys phù hợp với ANGLE của bài.
 
 ### Format mỗi entry trong library
 
@@ -208,12 +215,17 @@ python scripts/audit_library.py
   "brief": None,        # brief content
   "writer": None,       # "spades-story-writer" | "spades-copywriter" | "spades-advertorial"
   "slug": None,         # slug sau khi scan story
+  "scan_query": None,   # rich query (ANGLE + 2 CHIỀU POKER) dùng để retry scan
+  "story_num": "1",
+  "post_slug": None,
 }
 ```
 
 **Detection brief:** Khi Strategist output có `BRIEF → spades-*` → app.py parse writer type và trigger flow tương ứng.
 
-**Story Writing với TÌM STORY:** app.py gọi `pipeline.py --step scan` → show danh sách → user chọn số → gọi writer.
+**Story Writing với TÌM STORY:** app.py build `scan_query` từ brief (gồm STORY PATTERN + ANGLE + 2 CHIỀU POKER) → gọi `run_scanner(scan_query)` → show danh sách → user chọn số hoặc nhắn `0`/`tìm lại` để retry → gọi writer.
+
+**Retry scan:** User nhắn `0`, `tìm lại`, `tim lai`, hoặc `retry` trong state `story_pick` → scanner chạy lại với cùng query, lưu file mới với suffix `_r2`. Bot hiển thị ⚠️ nếu không có story nào đạt BRIDGE QUALITY: STRONG.
 
 **Các dict cũ đã bỏ:** `_pending_guided`, `_pending_story`, `_pending_templates` — không còn trong codebase.
 
@@ -242,9 +254,9 @@ python pipeline.py --pipeline "tư duy logic" --guided
 ## Scan mechanism (vẫn dùng cho Story Writing)
 
 **Pattern Scan (primary)** — khi brief có `TÌM STORY:`:
-- app.py extract pattern → gọi `pipeline.py --step scan`
-- 3 queries: chiều sai / chiều đúng / broad
-- Story từ bất kỳ domain nào
+- app.py build rich query gồm: STORY PATTERN (từ TÌM STORY:) + ANGLE + CHIỀU SAI/ĐÚNG POKER (từ brief) → truyền vào `run_scanner()`
+- Scanner dùng rich query để sinh 3 search queries sát angle hơn: chiều sai / chiều đúng / broad
+- Story từ bất kỳ domain nào — domain router chỉ là fallback cuối khi Pattern Scan lỗi
 
 **Domain Scan (fallback)** — khi dùng `--step scan` trực tiếp:
 - 9 domains: `Bóng đá | Esports/Gaming | MMA/Boxing | Đầu tư/Forex/Crypto | Kinh doanh thương hiệu lớn | Triết học/Stoicism | Hàng không vũ trụ | Lịch sử thế giới | Phim/Series triết học`
@@ -276,11 +288,11 @@ d:\Poker Cafe\spades-content-system\   ← git root, cũng là thư mục dev du
 │   └── shared/                   ← shared rules & library (@include system)
 │       ├── voice-rules.md        ← lamwork style chung
 │       └── library/
-│           ├── index.md          ← concept index cho Strategist
-│           ├── tam-ly.md         ← 29 bài tâm lý
-│           ├── khai-niem.md      ← 10 bài khái niệm
-│           ├── dinh-ly.md        ←  4 bài định lý
-│           └── co-ban.md         ← 10 bài cơ bản (không load vào writer)
+│           ├── index.md          ← concept index với keys cho Strategist (dùng điền LIBRARY REF)
+│           ├── tam-ly.md         ← 22 bài tâm lý (có key mỗi entry)
+│           ├── khai-niem.md      ← 15 bài khái niệm (có key mỗi entry)
+│           ├── dinh-ly.md        ←  4 bài định lý (luôn load, không cần key)
+│           └── co-ban.md         ← Placeholder — entries đã chuyển sang khai-niem.md
 │
 ├── scripts/
 │   ├── build_poker_library.py    ← scrape + build library từ wikipoker.net
@@ -337,4 +349,6 @@ Nếu git pull lỗi: `git pull origin main --rebase`
 - **Đổi voice rule** → chỉ sửa `agents/shared/voice-rules.md` — tất cả writer agents tự nhận
 - **Thêm agent mới** → tạo file `.md` mới + thêm `<!-- @include: shared/voice-rules.md -->` vào đầu
 - **Thêm bài mới vào library** → thêm URL vào `ARTICLE_URLS` trong `scripts/build_poker_library.py` → chạy `python scripts/build_poker_library.py [category]`
-- **Kiểm tra library** → chạy `python scripts/audit_library.py` (expect: "OK: 53 entries | Issues: 0")
+- **Kiểm tra library** → chạy `python scripts/audit_library.py`
+- **Thêm entry mới vào library** → thêm `<!-- key: slug -->` trước entry + cập nhật `index.md` với key mới
+- **Keys library:** tam-ly 22 keys + khai-niem 15 keys = 37 keyed entries + 4 dinh-ly (always load) = 41 total

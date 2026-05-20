@@ -29,8 +29,8 @@ VÍ DỤ FAIL (phải dịch):
 - Bóng đá: aggregate, pressing, high line → dịch ("tổng tỷ số", "pressing" thì OK vì fan bóng đá VN quen, "hàng thủ dâng cao")
 - Kinh doanh: leverage, anticipate, scalable (dùng như tính từ thông thường) → dịch
 
-Poker riêng — "tay" và "hand" đều tự nhiên, không ép một trong hai:
-"tay này mình fold" và "hand này bị bad beat" đều đúng ngữ cảnh
+Poker riêng dùng "hand" thay vì "tay". Ví dụ "hand bài" thay vì "tay bài"
+không dùng "tay này mình fold" mà dùng "hand này bị bad beat"
 
 Từ poker dùng tự do: stack, short stack, blind, big blind, small blind, buy-in, flop, turn, river, board, pot, hand/tay, rebuy, out
 

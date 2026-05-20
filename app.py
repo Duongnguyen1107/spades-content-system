@@ -30,6 +30,16 @@ BASE_DIR = Path(__file__).parent
 _anthropic_client = _anthropic_lib.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 _openai_client    = _openai_lib(api_key=os.environ.get("OPENAI_API_KEY"))
 
+_deepseek_client = None
+try:
+    if os.environ.get("DEEPSEEK_API_KEY"):
+        _deepseek_client = _openai_lib(
+            api_key=os.environ.get("DEEPSEEK_API_KEY"),
+            base_url="https://api.deepseek.com",
+        )
+except Exception:
+    pass
+
 TOKEN     = os.getenv("TELEGRAM_BOT_TOKEN")
 WH_SECRET = os.getenv("WEBHOOK_SECRET", "spades2026bot")
 DOMAIN    = os.getenv("WEBHOOK_DOMAIN", "diymode.work")
@@ -49,6 +59,7 @@ def new_session() -> dict:
         "slug":        None,    # slug sau khi scan story
         "story_num":   "1",
         "post_slug":   None,    # slug của bài viết vừa xuất
+        "scan_query":  None,    # rich query dùng để retry scan
     }
 
 def get_session(chat_id: int) -> dict:
@@ -67,14 +78,17 @@ def _resolve_includes(text: str, agents_dir: Path) -> str:
         return inc_path.read_text(encoding="utf-8") if inc_path.exists() else m.group(0)
     return re.sub(r'<!--\s*@include:\s*(.+?)\s*-->', _load_include, text)
 
-def _load_agent(name: str) -> str:
+def _load_agent(name: str, library_entries: str = "") -> str:
     path = BASE_DIR / "agents" / f"{name}.md"
     text = path.read_text(encoding="utf-8")
     if text.startswith("---"):
         parts = text.split("---", 2)
         text = parts[2].strip() if len(parts) > 2 else text
     text = _resolve_includes(text, BASE_DIR / "agents")
-
+    # Inject selective library entries tại placeholder
+    if "<!-- @library-selective -->" in text:
+        injection = f"\n{library_entries}\n" if library_entries else ""
+        text = re.sub(r"<!--\s*@library-selective\s*-->.*?(?=\n[^\n]|\Z)", injection, text, flags=re.DOTALL)
     if name in _BRAND_AGENTS:
         brand_path = BASE_DIR / "brand-context.md"
         if brand_path.exists():
@@ -82,9 +96,10 @@ def _load_agent(name: str) -> str:
             text = f"{brand}\n\n---\n\n{text}"
     return text
 
-SONNET     = "claude-sonnet-4-6"
-HAIKU      = "claude-haiku-4-5-20251001"
-GPT41MINI  = "gpt-4.1-mini"
+SONNET        = "claude-sonnet-4-6"
+HAIKU         = "claude-haiku-4-5-20251001"
+GPT41MINI     = "gpt-4.1-mini"
+DEEPSEEK_MODEL = "deepseek-chat"
 
 def _call_agent_sync(system: str, messages: list, max_tokens: int = 1500, model: str = SONNET) -> str:
     return _anthropic_client.messages.create(
@@ -102,6 +117,15 @@ def _call_openai_sync(system: str, messages: list, max_tokens: int = 3000, model
     )
     return response.choices[0].message.content
 
+def _call_deepseek_sync(system: str, messages: list, max_tokens: int = 3000) -> str:
+    response = _deepseek_client.chat.completions.create(
+        model=DEEPSEEK_MODEL,
+        max_tokens=max_tokens,
+        temperature=0.7,
+        messages=[{"role": "system", "content": system}] + messages,
+    )
+    return response.choices[0].message.content
+
 def _detect_brief_type(text: str) -> str | None:
     for writer in ["spades-story-writer", "spades-copywriter", "spades-advertorial"]:
         if f"BRIEF → {writer}" in text:
@@ -111,9 +135,63 @@ def _detect_brief_type(text: str) -> str | None:
 def _needs_story_scan(brief: str) -> bool:
     return "TÌM STORY:" in brief
 
-def _extract_scan_topic(brief: str, fallback: str) -> str:
+def _build_scan_query(brief: str, fallback: str) -> str:
+    """Build rich query cho Scanner — gửi ANGLE + 2 CHIỀU POKER thay vì chỉ TÌM STORY."""
     m = re.search(r"TÌM STORY:\s*(.+?)(?:\n|$)", brief)
-    return m.group(1).strip() if m else fallback
+    pattern = m.group(1).strip() if m else fallback
+
+    m_angle = re.search(r"ANGLE:\s*(.+?)(?:\n|$)", brief)
+    concept = m_angle.group(1).strip() if m_angle else ""
+
+    # Lấy từ block 2 CHIỀU POKER, tránh nhầm với Chiều sai/đúng trong STORY section
+    m_block = re.search(r"2 CHIỀU POKER:(.*?)(?=\n[A-Z\[\*]|\Z)", brief, re.DOTALL)
+    chieu_sai = chieu_dung = ""
+    if m_block:
+        blk = m_block.group(1)
+        ms = re.search(r"Chiều sai:\s*(.+?)(?:\n|$)", blk)
+        md = re.search(r"Chiều đúng:\s*(.+?)(?:\n|$)", blk)
+        if ms: chieu_sai = ms.group(1).strip()
+        if md: chieu_dung = md.group(1).strip()
+
+    parts = [f"STORY PATTERN: {pattern}"]
+    if concept:
+        parts.append(f"CONCEPT: {concept}")
+    if chieu_sai:
+        parts.append(f"CHIỀU SAI: {chieu_sai}")
+    if chieu_dung:
+        parts.append(f"CHIỀU ĐÚNG: {chieu_dung}")
+    return "\n".join(parts)
+
+def _story_has_strong(text: str) -> bool:
+    return bool(re.search(r"BRIDGE QUALITY.*STRONG", text, re.IGNORECASE))
+
+def _parse_library_refs(brief: str) -> list[str]:
+    """Extract keys từ LIBRARY REF field trong brief."""
+    m = re.search(r"LIBRARY REF:\s*([^\n]+)", brief)
+    if not m:
+        return []
+    raw = m.group(1).strip()
+    if raw.lower() == "none" or not raw:
+        return []
+    return [k.strip() for k in re.split(r"[|,]", raw) if k.strip() and k.strip().lower() != "none"]
+
+def _get_library_entries(keys: list[str]) -> str:
+    """Extract full entries từ library files theo keys. Trả về empty string nếu keys rỗng."""
+    if not keys:
+        return ""
+    agents_dir = BASE_DIR / "agents" / "shared" / "library"
+    matched = []
+    for fname in ["tam-ly.md", "khai-niem.md"]:
+        text = (agents_dir / fname).read_text(encoding="utf-8")
+        # Split entries bằng separator
+        blocks = re.split(r"\n\n---\n\n", text)
+        for block in blocks:
+            m = re.search(r"<!--\s*key:\s*(\S+)\s*-->", block)
+            if m and m.group(1) in keys:
+                # Bỏ dòng key comment khỏi entry khi inject
+                entry = re.sub(r"<!--\s*key:\s*\S+\s*-->\n?", "", block).strip()
+                matched.append(entry)
+    return "\n\n---\n\n".join(matched)
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -208,14 +286,27 @@ async def _run_writer(update: Update, session: dict):
             selected_story = _extract_story_block(story_text, story_num)
             user_content = f"Story:\n\n{selected_story}\n\nBrief:\n\n{brief}"
 
-    writer_system = _load_agent(writer)
+    # Selective library injection cho Story Writer
+    library_entries = ""
+    if writer == "spades-story-writer":
+        keys = _parse_library_refs(brief)
+        library_entries = _get_library_entries(keys)
+
+    writer_system = _load_agent(writer, library_entries=library_entries)
     loop = asyncio.get_event_loop()
 
-    writer_model = HAIKU if writer == "spades-story-writer" else SONNET
-    result = await loop.run_in_executor(
-        None,
-        lambda: _call_agent_sync(writer_system, [{"role": "user", "content": user_content}], max_tokens=3000, model=writer_model)
-    )
+    if _deepseek_client:
+        result = await loop.run_in_executor(
+            None,
+            lambda: _call_deepseek_sync(writer_system, [{"role": "user", "content": user_content}], max_tokens=3000)
+        )
+    else:
+        # Fallback: Story Writer → Haiku, các writer khác → Sonnet
+        writer_model = HAIKU if writer == "spades-story-writer" else SONNET
+        result = await loop.run_in_executor(
+            None,
+            lambda: _call_agent_sync(writer_system, [{"role": "user", "content": user_content}], max_tokens=3000, model=writer_model)
+        )
 
     # Xóa em-dash
     result = result.replace(" — ", ", ").replace("— ", ", ").replace(" —", ",")
@@ -299,18 +390,24 @@ async def handle_content_message(update: Update, text: str):
             if writer == "spades-story-writer" and _needs_story_scan(brief):
                 # Cần tìm story trước
                 first_msg = session["messages"][0]["content"] if session["messages"] else text
-                topic = _extract_scan_topic(brief, first_msg)
+                scan_query = _build_scan_query(brief, first_msg)
 
-                await update.message.reply_text(f"Đang tìm story cho: *{topic[:60]}*...", parse_mode="Markdown")
+                # Lấy pattern ngắn để hiển thị + tạo slug
+                m_pat = re.search(r"STORY PATTERN:\s*(.+?)(?:\n|$)", scan_query)
+                pattern_short = m_pat.group(1).strip()[:60] if m_pat else first_msg[:60]
+
+                session["scan_query"] = scan_query
+
+                await update.message.reply_text(f"Đang tìm story cho: *{pattern_short}*...", parse_mode="Markdown")
                 try:
                     story_text = await loop.run_in_executor(
-                        None, lambda: _pipeline_run_scanner(topic)
+                        None, lambda: _pipeline_run_scanner(scan_query)
                     )
                 except Exception as e:
                     await update.message.reply_text(f"Scan lỗi: {e}")
                     return
 
-                slug = _pipeline_make_slug(topic)
+                slug = _pipeline_make_slug(pattern_short)
                 story_path = BASE_DIR / "outputs" / "stories" / f"{slug}.md"
                 story_path.parent.mkdir(parents=True, exist_ok=True)
                 story_path.write_text(story_text, encoding="utf-8")
@@ -325,10 +422,11 @@ async def handle_content_message(update: Update, text: str):
                         lines = ["*Chọn story để viết bài:*\n"]
                         for idx, title, domain in stories:
                             lines.append(f"*{idx}.* [{domain}] {title}")
-                        lines.append(f"\nReply số (*1*–*{len(stories)}*) để chọn.")
+                        quality_note = "" if _story_has_strong(story_text) else "\n⚠️ Chưa có story STRONG bridge — reply *0* để tìm lại nếu muốn."
+                        lines.append(f"\nReply số (*1*–*{len(stories)}*) để chọn, hoặc *0* để tìm lại.{quality_note}")
                         await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
                     else:
-                        await update.message.reply_text("Reply *1* để dùng story đầu tiên.", parse_mode="Markdown")
+                        await update.message.reply_text("Reply *1* để dùng story đầu tiên, hoặc *0* để tìm lại.", parse_mode="Markdown")
             else:
                 # Viết thẳng (Copywriting, Advertorial, hoặc Story Writer đã có story)
                 await _run_writer(update, session)
@@ -354,11 +452,40 @@ async def handle_content_message(update: Update, text: str):
 
     # ── STORY_PICK: user chọn story số mấy ───────────────────────────────────
     elif state == "story_pick":
+        t = text.strip().lower()
         if text.strip().isdigit():
             session["story_num"] = text.strip()
             await _run_writer(update, session)
+        elif t in ("0", "tìm lại", "tim lai", "retry"):
+            scan_query = session.get("scan_query") or session["brief"]
+            await update.message.reply_text("Đang tìm story khác...")
+            try:
+                story_text = await loop.run_in_executor(
+                    None, lambda: _pipeline_run_scanner(scan_query)
+                )
+            except Exception as e:
+                await update.message.reply_text(f"Scan lỗi: {e}")
+                return
+            m_pat = re.search(r"STORY PATTERN:\s*(.+?)(?:\n|$)", scan_query)
+            slug_text = m_pat.group(1).strip() if m_pat else "retry"
+            slug = _pipeline_make_slug(slug_text) + "_r2"
+            story_path = BASE_DIR / "outputs" / "stories" / f"{slug}.md"
+            story_path.parent.mkdir(parents=True, exist_ok=True)
+            story_path.write_text(story_text, encoding="utf-8")
+            session["slug"] = slug
+            await send_file(update, story_text, story_path.name)
+            stories = parse_story_titles(story_text)
+            if stories:
+                lines = ["*Story mới — chọn để viết bài:*\n"]
+                for idx, title, domain in stories:
+                    lines.append(f"*{idx}.* [{domain}] {title}")
+                quality_note = "" if _story_has_strong(story_text) else "\n⚠️ Vẫn chưa có STRONG bridge — thử *0* thêm lần nữa."
+                lines.append(f"\nReply số hoặc *0* để tìm lại.{quality_note}")
+                await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
+            else:
+                await update.message.reply_text("Không tìm thêm được story mới. Ae thử *0* thêm lần nữa hoặc /cancel để bắt đầu lại.", parse_mode="Markdown")
         else:
-            await update.message.reply_text("Reply số để chọn story (ví dụ: *1*, *2*).", parse_mode="Markdown")
+            await update.message.reply_text("Reply số để chọn story (ví dụ: *1*, *2*), hoặc *0* để tìm lại.", parse_mode="Markdown")
 
     # ── POST_ARTICLE: sau khi nhận bài ───────────────────────────────────────
     elif state == "post_article":

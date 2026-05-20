@@ -3,6 +3,9 @@
 Tham chiếu để bridge story → poker insight chính xác.
 Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker section.
 
+---
+
+<!-- key: tilt-adhd -->
 **Tên khái niệm:** Tilt ở người ADHD
 
 **Định nghĩa:** Tilt là trạng thái mất kiểm soát cảm xúc sau những thua bài, tàn khốc hơn ở người ADHD vì sự sụt giảm Dopamine cực kỳ sâu và mất kết nối giữa vùng não lý trí và hệ thống phòng vệ.
@@ -19,6 +22,7 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 ---
 
+<!-- key: kim-nen-cam-xuc -->
 **Tên khái niệm:** Kìm nén cảm xúc vs Phục hồi cảm xúc
 
 **Định nghĩa:** Kìm nén cảm xúc là cố gắng lờ đi hay tách biệt cảm xúc tiêu cực, trong khi phục hồi cảm xúc là thừa nhận, cảm nhận chúng và tiến tiếp. Hai cách tiếp cận này có tác động hoàn toàn khác nhau đến hiệu suất poker dài hạn.
@@ -35,6 +39,7 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 ---
 
+<!-- key: tilt-ky-vong -->
 **Tên khái niệm:** Tilt do kỳ vọng bị phá vỡ
 
 **Định nghĩa:** Tilt không phải do hành động cụ thể của đối thủ hay dealer, mà do kỳ vọng của chính người chơi bị vi phạm. Những điều "vô lý" gây tilt khi không phù hợp với "chuẩn poker" mà người chơi tin là đúng.
@@ -51,22 +56,7 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 ---
 
-**Tên khái niệm:** Sự cân bằng toàn diện của chuyên gia poker
-
-**Định nghĩa:** Khác biệt giữa người chơi giỏi và chuyên gia poker nằm ở khả năng phát triển cân bằng tất cả các kỹ năng đến mức cao nhất, thay vì tập trung quá nhiều vào một khía cạnh duy nhất.
-
-**Cơ chế tâm lý:** Não bộ con người có xu hướng chuyên sâu vào một lĩnh vực (specialization bias), nhưng thành công lâu dài đòi hỏi sự cân bằng giữa tư duy logic và ổn định cảm xúc.
-
-**Chiều sai:** Chỉ phát triển tư duy chiến lược → bỏ qua yếu tố cảm xúc, tâm lý → thất bại hoặc kết quả kém dài hạn
-
-**Chiều đúng:** Phát triển cân bằng kỹ năng (lý thuyết, cảm xúc, bền bỉ) → hiểu sâu poker từ nhiều khía cạnh → duy trì kết quả tốt dài hạn
-
-**Ví dụ bàn:** Người chơi A giỏi về tính toán nhưng hay bị tilt khi thua. Người chơi B có cảm xúc ổn định và hiểu lý thuyết → B thắng chip bền vững hơn.
-
-*Nguồn: https://wikipoker.net/dac-diem-chung-cua-nhung-chuyen-gia-poker/*
-
----
-
+<!-- key: ky-luat-spot -->
 **Tên khái niệm:** Kỷ luật và Chờ đợi Spot tốt
 
 **Định nghĩa:** Kỷ luật trong poker là khả năng kiểm soát bản thân, tránh chơi quá nhiều tay và chỉ tham gia vào những tình huống có lợi thế rõ ràng. Đây là yếu tố then chốt để duy trì A-game và bảo vệ bankroll dài hạn.
@@ -83,22 +73,7 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 ---
 
-**Tên khái niệm:** Cân bằng Poker và Cuộc sống
-
-**Định nghĩa:** Trạng thái ổn định tương đối giữa việc grind poker chuyên nghiệp và các khía cạnh khác của cuộc sống như gia đình, sức khỏe, mối quan hệ. Đây không phải sự bình đẳng tuyệt đối mà là sự tương xứng phù hợp với hoàn cảnh và mục tiêu cá nhân.
-
-**Cơ chế tâm lý:** Con người có xu hướng áp dụng một định nghĩa "cân bằng" cố định, nhưng thực tế nhu cầu và ưu tiên thay đổi theo tuổi tác, giai đoạn sự nghiệp, và tình huống sống.
-
-**Chiều sai:** Kỳ vọng sự cân bằng tuyệt đối từ ngày đầu → dẫn đến thất vọng, mất động lực, hoặc hy sinh quan hệ cá nhân không cần thiết.
-
-**Chiều đúng:** Chấp nhận định nghĩa "cân bằng" linh hoạt theo từng giai đoạn → điều chỉnh ưu tiên phù hợp → duy trì bền vững hơn.
-
-**Ví dụ bàn:** N/A
-
-*Nguồn: https://wikipoker.net/can-bang-giua-poker-va-cuoc-song/*
-
----
-
+<!-- key: moral-luck -->
 **Tên khái niệm:** Moral Luck - Thiên kiến đánh giá quyết định
 
 **Định nghĩa:** Xu hướng đánh giá tính đúng sai của một quyết định dựa trên kết quả may mắn hay không, chứ không dựa vào bản chất thực sự của quyết định đó.
@@ -115,22 +90,7 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 ---
 
-**Tên khái niệm:** Bluff trong Poker
-
-**Định nghĩa:** Bluff là hành động cược/tăng cược với tay bài yếu để khiến đối thủ fold, thay vì để tay bài đó đi đến showdown. Giá trị thực của bluff không chỉ là giành pot hiện tại mà còn ảnh hưởng tâm lý dài hạn đến cách đối thủ nhìn nhận và chơi với bạn.
-
-**Cơ chế tâm lý:** Bluff hoạt động vì nó kích hoạt nhận thức về chi phí-lợi ích: đối thủ phải đánh giá liệu call có đáng rủi ro hơn fold, dẫn tới quyết định tránh tổn thất (loss aversion).
-
-**Chiều sai:** Bluff quá thường xuyên → đối thủ điều chỉnh chiến lược bằng cách call nhiều hơn, làm bluff mất giá trị.
-
-**Chiều đúng:** Bluff có chọn lọc tại thời điểm đúng → tạo hình ảnh credible → đối thủ fold thường xuyên hơn, cho phép bạn khai thác giá trị lâu dài.
-
-**Ví dụ bàn:** Bạn c-bet flop với missed draw, đối thủ fold. Lần sau c-bet cùng vị trí, đối thủ fold nhanh hơn vì nhớ lần trước, dù tay bạn thực tế yếu.
-
-*Nguồn: https://wikipoker.net/gia-tri-that-su-cua-viec-bluff/*
-
----
-
+<!-- key: equanimity -->
 **Tên khái niệm:** Sự bình thản (Equanimity) trong poker
 
 **Định nghĩa:** Equanimity là trạng thái tâm lý ổn định, không bị ảnh hưởng bởi các điều kiện bên ngoài và sự phán xét chủ quan. Đó là khả năng chấp nhận mọi tình huống như nó vốn có, duy trì sự điềm tĩnh ngay cả khi đối mặt với khó khăn.
@@ -147,6 +107,7 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 ---
 
+<!-- key: quyet-dinh-boc-dong -->
 **Tên khái niệm:** Quyết định bốc đồng trong poker
 
 **Định nghĩa:** Những nước đi mà người chơi thực hiện mà không trải qua quá trình ra quyết định đầy đủ, dẫn đến hối hận ngay lập tức. Đây là hành động dựa vào cảm xúc thay vì logic và chiến lược.
@@ -163,6 +124,7 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 ---
 
+<!-- key: kien-nhan -->
 **Tên khái niệm:** Kiên nhẫn trong Poker
 
 **Định nghĩa:** Kiên nhẫn là khả năng giữ bình tĩnh khi đối mặt với những tình huống chờ đợi, card-dead kéo dài hoặc đối thủ suy nghĩ lâu. Đó là một chiến lược quan trọng giúp duy trì tâm lý ổn định và ra quyết định đúng đắn.
@@ -179,6 +141,7 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 ---
 
+<!-- key: dunning-kruger -->
 **Tên khái niệm:** Hiệu ứng Dunning-Kruger trong Poker
 
 **Định nghĩa:** Hiện tượng tâm lý où những người chơi poker yếu kém tự đánh giá khả năng của mình cao hơn thực tế. Họ không nhận ra những thiếu sót trong kỹ năng ngay cả khi được so sánh với năng lực thực tế.
@@ -195,6 +158,7 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 ---
 
+<!-- key: mat-niem-vui -->
 **Tên khái niệm:** Mất niềm vui khi chơi quá nhiều
 
 **Định nghĩa:** Tình trạng người chơi poker không còn cảm thấy vui vẻ khi chơi, niềm vui giải trí biến thành gánh nặng và áp lực. Điều này xảy ra khi chơi quá thường xuyên hoặc vượt quá ngân sách, đặc biệt đối với người chơi nghiệp dư.
@@ -211,22 +175,7 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 ---
 
-**Tên khái niệm:** Cân bằng lý thuyết và thực hành trong học poker
-
-**Định nghĩa:** Việc phân bổ thời gian học tập và chơi poker một cách cân đối, thay vì học liên tục rồi chơi liên tục. Người mới nên dành 50% thời gian cho mỗi hoạt động.
-
-**Cơ chế tâm lý:** Não bộ cần áp dụng kiến thức vào thực tiễn ngay lập tức để hiểu rõ tại sao nó hoạt động, thay vì lưu trữ thông tin trừu tượng mà không có ngữ cảnh thực tế.
-
-**Chiều sai:** Người chơi học liên tục nhiều tuần rồi chơi liên tục nhiều tháng → không nắm vững kiến thức, áp dụng lý thuyết không hiệu quả, tiến bộ chậm.
-
-**Chiều đúng:** Xen kẽ học và chơi hàng ngày (50-50 lúc mới bắt đầu) → tạo ngữ cảnh thực tiễn cho lý thuyết → hiểu sâu hơn và cải thiện nhanh hơn.
-
-**Ví dụ bàn:** Người mới học về odds hôm nay, chơi poker bằng app miễn phí tối hôm đó để thử nghiệm tính toán tỷ lệ. Ngày hôm sau, học về hand selection, lại chơi ngay để kiểm chứng chiến lược.
-
-*Nguồn: https://wikipoker.net/lam-the-nao-de-hoc-poker-dung-cach/*
-
----
-
+<!-- key: fomo -->
 **Tên khái niệm:** FOMO trong Poker
 
 **Định nghĩa:** FOMO (Fear of Missing Out) là nỗi sợ bỏ lỡ cơ hội, khiến người chơi poker đưa ra quyết định không lý tính dựa trên hối tiếc về những hand đã fold trước đó.
@@ -243,22 +192,7 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 ---
 
-**Tên khái niệm:** Kiểm soát 5 yếu tố sống để chơi poker tốt
-
-**Định nghĩa:** Poker phản chiếu cuộc sống, nên để chơi ở trạng thái tốt nhất, bạn phải kiểm soát: thông tin tiếp nhận, môi trường xung quanh, dinh dưỡng, giấc ngủ và tập luyện thể chất.
-
-**Cơ chế tâm lý:** Não bộ con người cần kích thích tinh thần và thể chất để duy trì hiệu suất cao, giống như chó Australian Shepherd – thiếu kích thích sẽ dẫn đến suy giảm nhận thức.
-
-**Chiều sai:** Tự nhốt mình trong môi trường hạn chế, thiếu tập luyện, ngủ kém, ăn uống bừa bãi → hiệu suất poker giảm mạnh, quyết định sai lầm tăng.
-
-**Chiều đúng:** Chủ động tối ưu 5 yếu tố (tiếp nhận thông tin tốt, môi trường tích cực, dinh dưỡng hợp lý, ngủ đủ, tập thể dục) → bộ não ở trạng thái tối ưu → chơi poker với phong độ cao nhất.
-
-**Ví dụ bàn:** N/A
-
-*Nguồn: https://wikipoker.net/choi-poker-o-trang-thai-tot-nhat/*
-
----
-
+<!-- key: outcome-bias -->
 **Tên khái niệm:** Định kiến về kết quả (Outcome Bias)
 
 **Định nghĩa:** Xu hướng đánh giá chất lượng quyết định dựa trên kết quả cuối cùng thay vì quá trình quyết định. Con người chỉ tập trung vào khoảnh khắc cao trào và cách trò chơi kết thúc.
@@ -275,6 +209,7 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 ---
 
+<!-- key: tanking -->
 **Tên khái niệm:** Tanking trong Poker
 
 **Định nghĩa:** Tanking là hành động một người chơi dành nhiều thời gian suy nghĩ trước khi đưa ra quyết định (bet, call, raise hoặc fold). Khi tank, người chơi cân nhắc hand của mình, hand đối thủ, kích thước pot và chiến lược tiếp theo.
@@ -291,22 +226,7 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 ---
 
-**Tên khái niệm:** Quy trình khởi động 4 bước poker
-
-**Định nghĩa:** Một hệ thống chuẩn bị trước khi chơi poker gồm 4 bước: loại bỏ sao nhãng, ôn tập kiến thức, ổn định tinh thần, xác định mục tiêu chiến lược.
-
-**Cơ chế tâm lý:** Não bộ cần tập trung cao độ và trạng thái tinh thần ổn định để đưa ra quyết định tối ưu, tránh ảnh hưởng của sao nhãng và cảm xúc tiêu cực.
-
-**Chiều sai:** Chơi khi bị sao nhãng, không ôn tập kiến thức → suy giảm khả năng phán đoán, ra quyết định sai, mất chip.
-
-**Chiều đúng:** Loại bỏ điện thoại, tiếng ồn, ôn tập chiến lược gần đây, ổn định tinh thần trước chơi → tập trung cao, áp dụng kiến thức hiệu quả → tăng win-rate.
-
-**Ví dụ bàn:** Bạn học về chiến lược Big Blind post-flop với hand yếu. Trước phiên chơi, ôn lại bài học và nhớ những hand tương tự. Khi gặp tình huống đó, bạn áp dụng đúng strategy thay vì fold/call sai.
-
-*Nguồn: https://wikipoker.net/cai-thien-ket-qua-choi-poker/*
-
----
-
+<!-- key: tu-phe-binh -->
 **Tên khái niệm:** Tự phê bình cân bằng trong Poker
 
 **Định nghĩa:** Khả năng đánh giá lại những sai lầm của mình một cách xây dựng mà không quá khắc nghiệt, giúp cải thiện kỹ năng mà không gây tổn hại tâm lý.
@@ -323,22 +243,7 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 ---
 
-**Tên khái niệm:** Cất điện thoại để tập trung
-
-**Định nghĩa:** Tắt hoặc để ở chế độ Airplane Mode điện thoại trong quá trình chơi poker để loại bỏ các yếu tố xao nhãng và duy trì sự tập trung toàn bộ vào trò chơi.
-
-**Cơ chế tâm lý:** Thông báo và tin nhắn kích hoạt tiết dopamine, tạo nhu cầu kiểm tra liên tục, làm chia tách sự chú ý khỏi nhiệm vụ quan trọng.
-
-**Chiều sai:** Kiểm tra điện thoại thường xuyên khi chơi → mất tập trung, bỏ lỡ thông tin về chiến lược đối thủ, sai lầm quyết định, mất chip.
-
-**Chiều đúng:** Cất điện thoại trước khi chơi → tập trung hoàn toàn vào range bài, nhận thức các lần showdown → học chiến lược đối thủ, ra quyết định tốt hơn, thắng nhiều chip hơn.
-
-**Ví dụ bàn:** Trong giai đoạn sớm giải đấu, bạn liên tục kiểm tra điện thoại vì bị thu hút bởi thông báo. Bạn bỏ lỡ cơ hội quan sát range bài của người chơi mạnh ở bàn, dẫn đến mất chip ở các vòng sau khi thông tin không đủ.
-
-*Nguồn: https://wikipoker.net/su-tap-trung-tren-ban-poker/*
-
----
-
+<!-- key: chasing-losses -->
 **Tên khái niệm:** Chasing Losses (Gỡ gạc mất chip)
 
 **Định nghĩa:** Hành động tiếp tục chơi sau một session thua để cố gỡ lại chip, thường dẫn đến quyết định không lý trí và thua thêm.
@@ -355,6 +260,7 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 ---
 
+<!-- key: muc-tieu-qua-trinh -->
 **Tên khái niệm:** Đặt mục tiêu poker dựa trên quá trình
 
 **Định nghĩa:** Đặt mục tiêu poker dựa trên các yếu tố có thể kiểm soát (số hand/giờ, học tập, review) thay vì kết quả ngắn hạn. Điều này giúp tập trung vào chất lượng quá trình chơi thay vì bị tác động bởi variance ngắn hạn.
@@ -371,6 +277,7 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 ---
 
+<!-- key: hinh-anh-nguoi-choi -->
 **Tên khái niệm:** Bốn dạng hình ảnh người chơi Poker
 
 **Định nghĩa:** Phân loại người chơi poker thành 4 dạng dựa trên tỷ lệ tham gia ván bài (VPIP) và lối chơi chủ động hay thụ động: Loose-Passive, Loose-Aggressive, Tight-Passive, Tight-Aggressive.
@@ -387,6 +294,7 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 ---
 
+<!-- key: downswing -->
 **Tên khái niệm:** Downswing trong Poker
 
 **Định nghĩa:** Downswing là giai đoạn mất chip kéo dài khi người chơi thua nhiều ván liên tiếp trong khoảng thời gian đáng kể (từ vài ngày đến vài tháng). Đây không phải do kỹ năng yếu mà là hệ quả tất yếu của tính ngẫu nhiên trong poker.
@@ -403,6 +311,7 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 ---
 
+<!-- key: bad-beat -->
 **Tên khái niệm:** Bad Beat trong Poker
 
 **Định nghĩa:** Bad beat là tình huống người chơi cầm hand mạnh, quyết định đúng với lợi thế equity lớn, nhưng vẫn thua vì đối thủ hit lá bài may mắn ở turn hoặc river. Đây không phải sai lầm chiến thuật mà là hệ quả tất yếu của variance trong poker.
@@ -419,6 +328,7 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 ---
 
+<!-- key: doc-bai -->
 **Tên khái niệm:** Đoán bài đối thủ trong Poker
 
 **Định nghĩa:** Kỹ năng dự đoán bài của đối thủ thông qua phân tích lối chơi, mức độ cược, thay đổi hành vi và các tín hiệu khác. Đây là chìa khóa để các cao thủ đưa ra quyết định chính xác và tối ưu kết quả.
@@ -429,12 +339,13 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 **Chiều đúng:** Phân tích lối chơi tight/loose, theo dõi tần suất cược, nhận ra thay đổi aggressive/passive → dự đoán chính xác bài đối thủ → đưa ra chiến thuật phù hợp.
 
-**Ví dụ bàn:** Đối thủ thường chỉ bet nhỏ, nhưng đột nhiên nhảy bet lớn → rất có thể họ cầm bài mạnh → bạn nên xem xét fold hoặc fold nếu bài không đủ mạnh.
+**Ví dụ bàn:** Suốt 2 orbit, đối thủ ở cutoff chỉ limp vào pot, không bao giờ raise. Đến tay này, flop ra Q-7-2 rainbow, họ đột ngột pot-size bet ngay lập tức không do dự. Bạn đang cầm Q-J — nhưng tốc độ và size này khác hoàn toàn pattern cũ. Fold. Đối thủ show top two pair Q-2.
 
 *Nguồn: https://wikipoker.net/bi-kip-doc-bai/*
 
 ---
 
+<!-- key: poker-face -->
 **Tên khái niệm:** Poker Face
 
 **Định nghĩa:** Vẻ mặt trung tính, không thể hiện cảm xúc thật của người chơi bất kể bài bạn tốt hay xấu. Đây là kỹ năng che giấu suy nghĩ và cảm xúc để đối thủ không đoán được sức mạnh bài của bạn.
@@ -451,6 +362,7 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 ---
 
+<!-- key: tilt-general -->
 **Tên khái niệm:** Tilt trong Poker
 
 **Định nghĩa:** Tilt là trạng thái mất kiểm soát cảm xúc và hành vi của người chơi poker, khiến họ đưa ra những quyết định thiếu suy nghĩ và không phù hợp với chiến lược bình thường.
@@ -461,7 +373,7 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 **Chiều đúng:** Nhận diện sớm dấu hiệu tilt → nghỉ ngơi, sử dụng kỹ thuật thở/thiền để cân bằng tâm trạng → giữ phong độ ổn định.
 
-**Ví dụ bàn:** John thua 5 ván liên tiếp, sau đó bị khiêu khích. Anh ta chơi thiếu suy nghĩ, chấp nhận rủi ro cao và mất nhiều chip trong những ván tiếp theo.
+**Ví dụ bàn:** Bạn vừa all-in với top set, đối thủ runner-runner flush ở river. Ngay ván tiếp theo, UTG open nhỏ — bạn 3-bet over-the-top với Q-9o vì vẫn còn tức. Đối thủ 4-bet lại, bạn gọi. Flop ra K-J-7 rainbow, không đụng đến Q-9. Bạn check-fold. Vừa mất thêm 40bb hoàn toàn không cần thiết.
 
 *Nguồn: https://wikipoker.net/tilt-la-gi-poker/*
 

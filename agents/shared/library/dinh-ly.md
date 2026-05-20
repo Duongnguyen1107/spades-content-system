@@ -13,7 +13,7 @@ Dùng **Chiều sai / Chiều đúng** và **Ví dụ bàn** khi viết poker se
 
 **Chiều đúng:** Đọc vị đối phương và phân tích hành động bet của họ → tiếp cận gần hơn cách chơi "nhìn thấy bài đối phương" → tối ưu kết quả.
 
-**Ví dụ bàn:** Khi bạn không biết đối phương có bài mạnh hay yếu, bạn nên cố gắng suy luận từ các hành động của họ. Nếu họ check, họ có thể có bài yếu, bạn có thể bet. Nếu họ bet mạnh, có thể họ có bài tốt, bạn cân nhắc fold.
+**Ví dụ bàn:** Board Q♠9♣4♦. Bạn bet flop, đối thủ call. Turn ra K♠, đối thủ check. Bạn nhớ đối thủ này suốt 2 giờ chưa bao giờ check-raise turn — check thường là give up. Bet. Fold ngay. Đây là chơi theo thông tin thật có, không phải công thức GTO chung chung.
 
 *Nguồn: https://wikipoker.net/dinh-ly-poker-co-ban/*
 

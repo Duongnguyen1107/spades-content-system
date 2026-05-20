@@ -1,65 +1,69 @@
 ## POKER CONCEPT INDEX — THAM CHIẾU KHI TẠO BRIEF
 
-Dùng để: (1) gợi ý angle cụ thể khi user đưa topic, (2) điền POKER LENS và 2 CHIỀU POKER với tên concept chuẩn thay vì mô tả chung chung.
+**Cách dùng:** Khi tạo brief Story Writing, điền field `LIBRARY REF:` với tối đa 3 keys liên quan nhất đến ANGLE và POKER LENS.
+Format: `LIBRARY REF: key1 | key2 | key3`
+Nếu topic không có concept phù hợp trong danh sách → ghi `LIBRARY REF: none`
+
+`dinh-ly` luôn được Writer load tự động — không cần ghi vào LIBRARY REF.
 
 ---
 
-### Mở rộng Bank Tâm lý (ngoài 8 angle cơ bản)
+### TÂM LÝ — tam-ly.md
 
-**Dunning-Kruger:** Người mới overestimate năng lực → không nhận ra điểm mù → call/raise dựa trên tự tin sai, bị exploit mà không biết.
-*Gợi ý khi: topic về tự tin thái quá, "nghĩ mình giỏi rồi", không chịu học thêm*
-
-**FOMO (Fear of Missing Out):** Sợ bỏ lỡ → vào pot khi không có edge → thua nhỏ tích lũy thành drain stack.
-*Gợi ý khi: topic về không chịu fold, "lỡ flop đẹp thì sao", FOMO khi thấy người khác thắng pot lớn*
-
-**Kỳ vọng bị phá vỡ:** Thực tế khác "quy chuẩn" trong đầu (dealer đếm bài, người late reg, đối thủ không fold) → amygdala hijack → tilt dù sự kiện không liên quan hand.
-*Gợi ý khi: topic về tilt từ lý do ngoài bàn bài, tilt vì người khác, môi trường*
-
-**Kìm nén cảm xúc:** Cố "gạt bỏ" cảm xúc thay vì xử lý → tích tụ ngầm → vỡ đúng lúc quan trọng nhất.
-*Gợi ý khi: topic về poker face, kiểm soát cảm xúc, tilt muộn trong session*
-
-**Downswing psychology:** Chuỗi thua dài → nghi ngờ năng lực → thay đổi play style sai thời điểm → thua thêm do tự phá A-game.
-*Gợi ý khi: topic về bad run, variance, không tin vào bản thân, "mình chơi sai hay xui"*
-
-**Negative thinking loop:** Nghĩ tiêu cực trước hand → self-fulfilling prophecy → thực sự chơi tệ hơn.
-*Gợi ý khi: topic về mindset trước khi chơi, nỗi sợ, chơi defensive*
-
-**Bình thản (Equanimity):** Không để điều kiện ngoài (bàn tệ, người khó chịu, đèn yếu) ảnh hưởng tâm lý → maintain A-game liên tục.
-*Gợi ý khi: topic về môi trường chơi, distraction, tập trung dài hạn*
-
-**Moral Luck:** Đánh giá đúng/sai của quyết định qua kết quả may mắn thay vì logic lúc ra quyết định.
-*Gợi ý khi: topic về "chơi đúng mà thua", đánh giá hand sau, bị chỉ trích vì bad beat*
-
-**Tank / Overthinking:** Tank quá lâu → overthink → chọn action tệ hơn instinct đầu tiên, đồng thời tiết lộ thông tin.
-*Gợi ý khi: topic về tốc độ quyết định, analysis paralysis, reads*
-
-**Session thua — dừng hay tiếp:** Không có điểm dừng rõ → tiếp tục khi đã tilt → loss thêm vì quyết định kém.
-*Gợi ý khi: topic về stop-loss, discipline, khi nào nên dừng*
+| Key | Tên khái niệm | Dùng khi topic liên quan đến... |
+|-----|--------------|--------------------------------|
+| `tilt-general` | Tilt trong Poker | tilt, mất kiểm soát cảm xúc, bad beat gây phản ứng sai |
+| `tilt-adhd` | Tilt ở người ADHD | tilt sâu, Dopamine, não bộ phản ứng cực đoan sau thua |
+| `tilt-ky-vong` | Tilt do kỳ vọng bị phá vỡ | tilt vì môi trường/người khác không theo "chuẩn", bất công |
+| `kim-nen-cam-xuc` | Kìm nén vs Phục hồi cảm xúc | kiểm soát cảm xúc, poker face, cố "gạt bỏ" cảm xúc |
+| `equanimity` | Sự bình thản (Equanimity) | stoicism, không bị điều kiện ngoài ảnh hưởng, tập trung |
+| `kien-nhan` | Kiên nhẫn trong Poker | survival instinct, chờ spot, card-dead, không hành động vội |
+| `ky-luat-spot` | Kỷ luật và Chờ đợi Spot tốt | discipline, tránh action bias, bứt rứt muốn vào pot |
+| `quyet-dinh-boc-dong` | Quyết định bốc đồng | counter-intuitive, bản năng override lý trí, hành động sai |
+| `outcome-bias` | Định kiến về kết quả | outcome bias, đánh giá quyết định bằng kết quả, "chơi đúng mà thua" |
+| `moral-luck` | Moral Luck | may mắn vs kỹ năng, đánh giá sai quyết định, variance |
+| `fomo` | FOMO trong Poker | sợ bỏ lỡ, không chịu fold, call loose vì "lỡ flop đẹp" |
+| `dunning-kruger` | Hiệu ứng Dunning-Kruger | tự tin thái quá, không nhận ra điểm mù, nghĩ mình giỏi hơn thực |
+| `downswing` | Downswing trong Poker | chuỗi thua dài, learned helplessness, nghi ngờ bản thân |
+| `bad-beat` | Bad Beat trong Poker | bad beat, expectation management, 80/20 ăn mừng sớm |
+| `chasing-losses` | Chasing Losses | sunk cost, gỡ gạc, không chịu dừng khi đã tilt |
+| `doc-bai` | Đoán bài đối thủ | đọc vị, information asymmetry, nhận ra pattern đối thủ |
+| `hinh-anh-nguoi-choi` | Bốn dạng hình ảnh người chơi | unpredictability, table image, tight/loose/aggressive/passive |
+| `poker-face` | Poker Face | che giấu cảm xúc, body language, deception |
+| `tanking` | Tanking trong Poker | tank/overthinking, analysis paralysis, tiết lộ thông tin khi tank |
+| `tu-phe-binh` | Tự phê bình cân bằng | negative thinking loop, self-criticism, tilt sau tự trách |
+| `mat-niem-vui` | Mất niềm vui khi chơi | burnout, complacency, áp lực phải thắng phá đi niềm vui |
+| `muc-tieu-qua-trinh` | Đặt mục tiêu dựa trên quá trình | process vs outcome, variance, đặt mục tiêu sai |
 
 ---
 
-### Khái niệm kỹ thuật — dùng cho POKER LENS và 2 CHIỀU POKER
+### KHÁI NIỆM KỸ THUẬT — khai-niem.md
 
-**EV (kỳ vọng dài hạn):** Quyết định đúng ≠ thắng hand này. Quyết định +EV → thắng dài hạn dù thua ngắn hạn. Dùng khi bridge về outcome bias, variance, bad beat.
-
-**Range phân cực:** Chỉ 3-bet bài rất mạnh hoặc bluff thuần — bỏ hand trung bình → đối thủ không biết đang đối mặt gì. Dùng khi bridge về unpredictability.
-
-**Control pot:** Giữ pot nhỏ với hand không chắc thắng showdown → giảm rủi ro khi bị raise. Dùng khi bridge về complacency, overcommitment.
-
-**Card dead:** Chuỗi bài xấu → bứt rứt → mở rộng range sai thời điểm → mất chip vì thiếu kiên nhẫn. Dùng khi bridge về survival instinct, patience.
-
-**3-bet balance:** Chỉ 3-bet value thì dễ đọc → cần semi-bluff để giữ đối thủ không confirm được range. Dùng khi bridge về unpredictability, consistency.
-
-**VPIP tăng khi tilt:** Chỉ số đo % hand vào pot — tăng đột biến khi tilt là dấu hiệu đang mất A-game. Dùng khi bridge về kỷ luật, discipline.
+| Key | Tên khái niệm | Dùng khi topic liên quan đến... |
+|-----|--------------|--------------------------------|
+| `ev` | Giá trị kỳ vọng (EV) | tư duy dài hạn, quyết định đúng vs thắng ngay, outcome bias |
+| `equity-retention` | Khả năng duy trì equity | chọn hand, quá tin vào made hand, không tính range đối thủ |
+| `card-dead` | Card dead | survival instinct, kiên nhẫn chờ, bứt rứt mở range sai |
+| `control-pot` | Control Pot | complacency, overcommitment, không kiểm soát pot với hand yếu |
+| `range-phan-cuc` | Range phân cực | unpredictability, table image, bluff vs value balance |
+| `bluff` | Bluff trong Poker | deception, table image, bluff frequency, loss aversion |
+| `slow-roll` | Slow roll | toxic behavior, ego, khiêu khích gây tilt đối thủ |
+| `kha-nang-choi-hand` | Khả năng chơi của một hand | hand selection, equity tĩnh vs động, realize equity |
+| `ky-thuat-truc-giac` | Kỹ thuật vs Trực giác | System 1 vs System 2, kỹ năng kết hợp vs thiên lệch một phía |
+| `icm` | ICM (Independent Chip Model) | tư duy phi tuyến, short-term vs long-term, bubble decision |
+| `three-bet` | 3-bet Poker | unpredictability, balance value vs bluff, không thể bị read |
+| `size-bet` | Size bet preflop | consistency, đối thủ đọc strength từ bet size, deception |
+| `gto-khai-thac` | GTO vs Khai thác Low Stakes | rigid rules vs adaptation, khai thác lỗi phi lý trí |
+| `nhan-biet-fish` | Nhận biết Fish | observation, reading people, khai thác điểm yếu tâm lý |
+| `preflop-position` | Chiến lược Preflop theo Vị trí | context-dependent decision, lợi thế thông tin, adapt to stack |
 
 ---
 
-### Định lý — dùng khi brief cần nguyên lý cụ thể có tên
+### ĐỊNH LÝ — dinh-ly.md (Writer luôn nhận, không cần ghi key)
 
-**Fundamental Theorem:** Chơi như biết bài đối thủ = thắng chip. Mọi sai lầm = không chơi đúng với thông tin có. Dùng khi bridge về information, đọc vị.
-
-**BalugaWhale:** Bị raise turn với top pair → gần như luôn nên fold. Raise turn = range rất mạnh. Dùng khi bridge về stubbornness, sunk cost.
-
-**Zeebo:** Không ai fold full house dù bet bao nhiêu. Đừng bluff người đang cầm full house. Dùng khi bridge về irrational confidence.
-
-**Clarkmeister:** 4 lá đồng chất xuất hiện heads-up → bet mạnh river nếu ra trước, dù bài gì → đối thủ fold vì sợ flush. Dùng khi bridge về fear exploitation, bluff timing.
+| Tên | Dùng khi... |
+|-----|------------|
+| Fundamental Theorem | information asymmetry, đọc vị, chơi đúng với thông tin có |
+| BalugaWhale | sunk cost, stubbornness, không chịu fold khi bị raise turn |
+| Zeebo | irrational confidence, không thể fold bài mạnh dù biết thua |
+| Clarkmeister | fear exploitation, bluff timing, tạo áp lực bằng board texture |

@@ -17,9 +17,11 @@ Nhiệm vụ: nhận story thô + bridge point → viết bài hoàn chỉnh the
 ---
 
 <!-- @include: shared/voice-rules.md -->
-<!-- @include: shared/library/tam-ly.md -->
-<!-- @include: shared/library/khai-niem.md -->
 <!-- @include: shared/library/dinh-ly.md -->
+<!-- @library-selective -->
+<!-- Các entries từ tam-ly và khai-niem sẽ được inject tự động bởi app.py
+     dựa trên LIBRARY REF trong brief. Nếu LIBRARY REF: none hoặc không có
+     → chỉ dùng dinh-ly ở trên + bank 8 góc tâm lý trong BANK GÓC TÂM LÝ bên dưới. -->
 
 **Thêm — Story Writing:**
 - Mở bài bằng tình huống cụ thể hoặc câu chuyện — KHÔNG mở bằng định nghĩa hay concept
@@ -89,7 +91,7 @@ Không phải template cứng — là flow tự nhiên. Nhưng phải có đủ 
 Story không phải là "kể sơ qua để vào poker." Story là một câu chuyện hoàn chỉnh, có thể đứng độc lập mà không cần phần poker.
 
 Bốn nhịp bắt buộc:
-- **Setup:** Nhân vật + bối cảnh + tension ban đầu (ai, ở đâu, vấn đề là gì). Nhân vật lần đầu xuất hiện phải được giới thiệu 1-2 câu: họ là ai, làm gì, tại sao relevant — đủ để người chưa biết tên này vẫn hiểu ngay. KHÔNG bỏ qua dù nhân vật nổi tiếng. VD tốt: "Michael Burry — bác sĩ thần kinh bỏ nghề để quản lý quỹ đầu tư, nổi tiếng vì đọc được những thứ người khác bỏ qua." VD tệ: nhắc tên rồi kể chuyện luôn không giải thích họ là ai.
+- **Setup:** Nhân vật + bối cảnh + tension ban đầu (ai, ở đâu, vấn đề là gì). Nhân vật lần đầu xuất hiện phải được giới thiệu 1-2 câu: họ là ai, làm gì, tại sao relevant — đủ để người chưa biết tên này vẫn hiểu ngay. KHÔNG bỏ qua dù nhân vật nổi tiếng. VD tốt: "Michael Burry, bác sĩ thần kinh bỏ nghề để quản lý quỹ đầu tư, nổi tiếng vì đọc được những thứ người khác bỏ qua." VD tệ: nhắc tên rồi kể chuyện luôn không giải thích họ là ai.
 - **Conflict:** Thứ gì đó không theo kế hoạch — sự cố, áp lực, đối thủ, giới hạn cụ thể
 - **Mechanism:** Cụ thể họ đã làm GÌ — không phải "ông ấy vượt qua", mà là từng bước cụ thể. Đây là phần dễ bị cắt nhưng là phần quan trọng nhất.
 - **Payoff:** Kết quả + emotional beat — câu nói, phản ứng, khoảnh khắc người đọc nhớ được
@@ -236,7 +238,7 @@ Giọng thật > giọng hoàn chỉnh. Nhưng không có giọng thật thì đ
 
 **Nhóm 1 — Newbie (mới chơi):**
 Sai lầm cốt lõi: action bias và FOMO — call loose, all-in vô tội vạ, chưa hiểu equity, chưa đọc vị được đối thủ.
-Viết cho nhóm này: tạo cognitive dissonance kiểu *"bạn nghĩ làm nhiều = nhiều cơ hội, nhưng thực ra làm ít hơn mới thắng."* Chiều sai phải mô tả đúng hành động của người mới — gọi liều để xem flop, all-in vì hồi hộp, không phải vì tính toán.
+Viết cho nhóm này: tạo cognitive dissonance kiểu *"ae nghĩ làm nhiều = nhiều cơ hội, nhưng thực ra làm ít hơn mới thắng."* Chiều sai phải mô tả đúng hành động của người mới — gọi liều để xem flop, all-in vì hồi hộp, không phải vì tính toán.
 
 **Nhóm 2 — Regular (chơi thường xuyên):**
 Sai lầm cốt lõi: ego và outcome bias — tilt khi đối thủ yếu hơn đánh bại mình, toxic với người mới, bình luận hand người khác vì cho rằng họ chơi sai.
